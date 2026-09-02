@@ -1,0 +1,4629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chinese Flashcards</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f0eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 24px 48px;
+      color: #1a1a1a;
+    }
+
+    /* ── Lesson selector ── */
+    .lesson-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 28px;
+      width: min(500px, 100%);
+    }
+
+    .lesson-pill {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: #fff;
+      color: #666;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .lesson-pill:hover { background: #eee; color: #333; }
+
+    .lesson-pill.active {
+      background: #1a1a1a;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* ── Counter ── */
+    .counter {
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: min(440px, 100%);
+      min-height: 300px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 32px;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+
+    /* Front state */
+    .card-front,
+    .card-back {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card-back { display: none; }
+
+    .card.revealed .card-front { display: none; }
+    .card.revealed .card-back  { display: flex; }
+
+    /* Front content */
+    .hanzi {
+      font-size: 72px;
+      font-weight: 400;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .hint {
+      margin-top: 14px;
+      font-size: 0.75rem;
+      color: #ccc;
+      letter-spacing: 0.04em;
+    }
+
+    /* Back content */
+    .pinyin {
+      font-size: 1.5rem;
+      color: #c0392b;
+      font-weight: 500;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .meaning {
+      font-size: 1.05rem;
+      color: #333;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: #eee;
+      margin-bottom: 16px;
+    }
+
+    .usage-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .usage-item {
+      position: relative;
+    }
+
+    /* Extend hover zone downward to cover where pinyin will appear,
+       preventing flicker caused by layout shift on reveal */
+    .usage-item::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: -2.5em;
+    }
+
+    .usage-zh {
+      font-size: 1.2rem;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .usage-pinyin {
+      font-size: 0.76rem;
+      color: #c0392b;
+      margin-top: 1px;
+      line-height: 1.4;
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .usage-item:hover .usage-pinyin,
+    .usage-item.pinyin-visible .usage-pinyin {
+      opacity: 1;
+      height: auto;
+      overflow: visible;
+    }
+
+    .usage-pinyin-hint {
+      font-size: 0.68rem;
+      color: #ccc;
+      margin-top: 2px;
+      letter-spacing: 0.03em;
+    }
+
+    .usage-item:hover .usage-pinyin-hint,
+    .usage-item.pinyin-visible .usage-pinyin-hint {
+      display: none;
+    }
+
+    .usage-en {
+      font-size: 0.76rem;
+      color: #999;
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      width: min(440px, 100%);
+      height: 3px;
+      background: #e5dfd8;
+      border-radius: 2px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #1a1a1a;
+      border-radius: 2px;
+      transition: width 0.25s ease;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    button { border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+
+    .btn-nav {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+      font-size: 1.1rem;
+      color: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-nav:hover  { background: #eee; }
+    .btn-nav:active { transform: scale(0.93); }
+
+    .btn-reveal {
+      padding: 12px 28px;
+      border-radius: 24px;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 500;
+      min-width: 110px;
+    }
+
+    .btn-reveal:hover  { background: #333; }
+    .btn-reveal:active { transform: scale(0.97); }
+
+    .btn-shuffle {
+      padding: 9px 16px;
+      border-radius: 20px;
+      background: transparent;
+      border: 1.5px solid #ddd;
+      color: #888;
+      font-size: 0.78rem;
+      margin-top: 14px;
+    }
+
+    .btn-shuffle:hover { border-color: #aaa; color: #444; }
+
+    .kbd-hint {
+      font-size: 0.7rem;
+      color: #bbb;
+      margin-top: 12px;
+    }
+
+    .kbd {
+      background: #eee;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 0.68rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Lesson selector -->
+  <div class="lesson-bar" id="lesson-bar"></div>
+
+  <!-- Counter -->
+  <div class="counter" id="counter">1 / 30</div>
+
+  <!-- Card -->
+  <div class="card" id="card" onclick="toggleReveal()">
+    <div class="card-front">
+      <div class="hanzi" id="hanzi"></div>
+      <div class="hint">tap to reveal</div>
+    </div>
+    <div class="card-back">
+      <div class="pinyin"  id="pinyin"></div>
+      <div class="meaning" id="meaning"></div>
+      <div class="divider" id="divider"></div>
+      <div class="usage-section" id="usage-section"></div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-nav"    onclick="prevCard(); event.stopPropagation()">←</button>
+    <button class="btn-reveal" id="btn-reveal" onclick="toggleReveal(); event.stopPropagation()">Reveal</button>
+    <button class="btn-nav"    onclick="nextCard(); event.stopPropagation()">→</button>
+  </div>
+
+  <button class="btn-shuffle" onclick="shuffleCards()">⇄ Shuffle</button>
+
+  <div class="kbd-hint">
+    <kbd class="kbd">Space</kbd> reveal / next &nbsp;
+    <kbd class="kbd">O</kbd> toggle &nbsp;
+    <kbd class="kbd">S</kbd> shuffle &nbsp;
+    <kbd class="kbd">←</kbd> <kbd class="kbd">→</kbd> navigate
+  </div>
+
+<script>
+const ALL_VOCAB = [
+  {
+    "hanzi": "推荐",
+    "pinyin": "tuī jiàn",
+    "meaning": "v. to recommend",
+    "usage": [
+      {
+        "zh": "王静给孙月推荐了一本书。",
+        "pinyin": "Wáng Jìng gěi Sūn Yuè tuī jiàn le yī běn shū.",
+        "en": "Wang Jing recommended a book to Sun Yue."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "内容",
+    "pinyin": "nèi róng",
+    "meaning": "n. content",
+    "usage": [
+      {
+        "zh": "书里的内容都是孩子想知道的科学知识。",
+        "pinyin": "Shū lǐ de nèi róng dōu shì hái zi xiǎng zhī dào de kē xué zhī shí.",
+        "en": "The content of the book is all scientific knowledge that children want to know."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "各种各样",
+    "pinyin": "gè zhǒng gè yàng",
+    "meaning": "expr. all kinds of, a wide variety of",
+    "usage": [
+      {
+        "zh": "她现在总是有各种各样的「为什么」。",
+        "pinyin": "Tā xiàn zài zǒng shì yǒu gè zhǒng gè yàng de 「wèi shén me」.",
+        "en": "She always has all kinds of 'whys' now."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "奇特",
+    "pinyin": "qí tè",
+    "meaning": "adj. peculiar, unique, remarkable",
+    "usage": [
+      {
+        "zh": "孩子眼睛里的世界是美丽和奇特的。",
+        "pinyin": "Hái zi yǎn jīng lǐ de shì jiè shì měi lì hé qí tè de.",
+        "en": "The world in a child's eyes is beautiful and remarkable."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "科学知识",
+    "pinyin": "kē xué zhī shí",
+    "meaning": "n. scientific knowledge",
+    "usage": [
+      {
+        "zh": "书里的内容都是孩子想知道的科学知识。",
+        "pinyin": "Shū lǐ de nèi róng dōu shì hái zi xiǎng zhī dào de kē xué zhī shí.",
+        "en": "The book's content is all scientific knowledge that children want to know."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "难道",
+    "pinyin": "nán dào",
+    "meaning": "adv. could it be that...? (rhetorical)",
+    "usage": [
+      {
+        "zh": "难道它和我们小时候看的《十万个为什么》不一样吗？",
+        "pinyin": "Nán dào tā hé wǒ men xiǎo shí hòu kàn de 《Shí Wàn Gè Wèi Shén Me》 bù yī yàng ma?",
+        "en": "Could it really be different from the one we read as kids?"
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "介绍",
+    "pinyin": "jiè shào",
+    "meaning": "v. to introduce, to present",
+    "usage": [
+      {
+        "zh": "《新十万个为什么》介绍了各种科学知识。",
+        "pinyin": "《Xīn Shí Wàn Gè Wèi Shén Me》 jiè shào le gè zhǒng kē xué zhī shí.",
+        "en": "The New 100,000 Whys introduces all kinds of scientific knowledge."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "包括",
+    "pinyin": "bāo kuò",
+    "meaning": "v. to include, including",
+    "usage": [
+      {
+        "zh": "包括动物、植物、社会和文化等等。",
+        "pinyin": "Bāo kuò dòng wù、zhí wù、shè huì hé wén huà děng děng.",
+        "en": "Including animals, plants, society, and culture, etc."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "社会",
+    "pinyin": "shè huì",
+    "meaning": "n. society",
+    "usage": [
+      {
+        "zh": "书里介绍了动物、植物、社会和文化等等。",
+        "pinyin": "Shū lǐ jiè shào le dòng wù、zhí wù、shè huì hé wén huà děng děng.",
+        "en": "The book covers animals, plants, society, and culture."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "是否",
+    "pinyin": "shì fǒu",
+    "meaning": "adv. whether or not",
+    "usage": [
+      {
+        "zh": "我不知道她是否能读懂。",
+        "pinyin": "Wǒ bù zhī dào tā shì fǒu néng dú dǒng.",
+        "en": "I don't know whether she can understand it."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "乘客",
+    "pinyin": "chéng kè",
+    "meaning": "n. passenger",
+    "usage": [
+      {
+        "zh": "各位乘客，大家好，感谢大家乘坐此次航班。",
+        "pinyin": "Gè wèi chéng kè, dà jiā hǎo, gǎn xiè dà jiā chéng zuò cǐ cì háng bān.",
+        "en": "Dear passengers, thank you for flying with us on this flight."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "此",
+    "pinyin": "cǐ",
+    "meaning": "pron. this (formal)",
+    "usage": [
+      {
+        "zh": "感谢大家乘坐此次航班。",
+        "pinyin": "Gǎn xiè dà jiā chéng zuò cǐ cì háng bān.",
+        "en": "Thank you for taking this flight."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "首都",
+    "pinyin": "shǒu dū",
+    "meaning": "n. capital city",
+    "usage": [
+      {
+        "zh": "我们的飞机将于20分钟后降落在北京首都国际机场。",
+        "pinyin": "Wǒ men de fēi jī jiāng yú 20 fēn zhōng hòu jiàng luò zài Běi Jīng Shǒu Dū Guó Jì Jī Chǎng.",
+        "en": "Our plane will land at Beijing Capital International Airport in 20 minutes."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "国际",
+    "pinyin": "guó jì",
+    "meaning": "adj. international",
+    "usage": [
+      {
+        "zh": "北京首都国际机场。",
+        "pinyin": "Běi Jīng Shǒu Dū Guó Jì Jī Chǎng.",
+        "en": "Beijing Capital International Airport."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "理发店",
+    "pinyin": "lǐ fā diàn",
+    "meaning": "n. barbershop, hair salon",
+    "usage": [
+      {
+        "zh": "对面那条街上新开了一家理发店。",
+        "pinyin": "Duì miàn nà tiáo jiē shàng xīn kāi le yī jiā lǐ fā diàn.",
+        "en": "A new hair salon just opened on the street across."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "该",
+    "pinyin": "gāi",
+    "meaning": "v./aux. should; to be someone's turn",
+    "usage": [
+      {
+        "zh": "正好我也该理发了。",
+        "pinyin": "Zhèng hǎo wǒ yě gāi lǐ fà le.",
+        "en": "It's just about time for me to get a haircut too."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "整理",
+    "pinyin": "zhěng lǐ",
+    "meaning": "v. to organize, to tidy up",
+    "usage": [
+      {
+        "zh": "你桌子上太乱了，找时间好好整理一下。",
+        "pinyin": "Nǐ zhuō zi shàng tài luàn le, zhǎo shí jiān hǎo hǎo zhěng lǐ yī xià.",
+        "en": "Your desk is such a mess, find time to tidy it up properly."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "窗",
+    "pinyin": "chuāng",
+    "meaning": "n. window",
+    "usage": [
+      {
+        "zh": "开一下窗吧，太热了。",
+        "pinyin": "Kāi yī xià chuāng ba, tài rè le.",
+        "en": "Open the window, it's too hot."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "脱",
+    "pinyin": "tuō",
+    "meaning": "v. to take off (clothing)",
+    "usage": [
+      {
+        "zh": "把外面那件衣服脱了吧。",
+        "pinyin": "Bǎ wài miàn nà jiàn yī fú tuō le ba.",
+        "en": "Take off that outer layer of clothing."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "逛",
+    "pinyin": "guàng",
+    "meaning": "v. to stroll, to go shopping, to browse",
+    "usage": [
+      {
+        "zh": "我真的受不了你了，你到底还要逛多久？",
+        "pinyin": "Wǒ zhēn de shòu bu liǎo nǐ le, nǐ dào dǐ hái yào guàng duō jiǔ?",
+        "en": "I really can't take it — how much longer do you want to keep shopping?"
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "遍",
+    "pinyin": "biàn",
+    "meaning": "m. times (measure word for complete actions)",
+    "usage": [
+      {
+        "zh": "一个简单的动作让我们练了二三十遍。",
+        "pinyin": "Yī gè jiǎn dān de dòng zuò ràng wǒ men liàn le èr sān shí biàn.",
+        "en": "One simple move and he had us practice it 20–30 times."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "严格",
+    "pinyin": "yán gé",
+    "meaning": "adj. strict, rigorous",
+    "usage": [
+      {
+        "zh": "他对你们严格一些好，这样可以让你们打好基础。",
+        "pinyin": "Tā duì nǐ men yán gé yī xiē hǎo, zhè yàng kě yǐ ràng nǐ men dǎ hǎo jī chǔ.",
+        "en": "It's good for him to be strict with you — that way you can build a solid foundation."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "基础",
+    "pinyin": "jī chǔ",
+    "meaning": "n. foundation, basis",
+    "usage": [
+      {
+        "zh": "这样可以让你们打好基础。",
+        "pinyin": "Zhè yàng kě yǐ ràng nǐ men dǎ hǎo jī chǔ.",
+        "en": "This way you can lay a good foundation."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "秒",
+    "pinyin": "miǎo",
+    "meaning": "m. second (unit of time, 1/60 of a minute)",
+    "usage": [
+      {
+        "zh": "他100米跑了10秒。",
+        "pinyin": "Tā 100 mǐ pǎo le 10 miǎo.",
+        "en": "He ran 100 meters in 10 seconds."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "方式",
+    "pinyin": "fāng shì",
+    "meaning": "n. way, mode, method",
+    "usage": [
+      {
+        "zh": "每个人学习的方式都不一样。",
+        "pinyin": "Měi gè rén xué xí de fāng shì dōu bù yī yàng.",
+        "en": "Everyone has their own way of learning."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "受不了",
+    "pinyin": "shòu bu liǎo",
+    "meaning": "expr. cannot stand, cannot bear",
+    "usage": [
+      {
+        "zh": "我真的受不了你了，你到底还要逛多久？",
+        "pinyin": "Wǒ zhēn de shòu bu liǎo nǐ le, nǐ dào dǐ hái yào guàng duō jiǔ?",
+        "en": "I really can't stand you — how much longer do you want to keep shopping?"
+      },
+      {
+        "zh": "不过天天对着电脑看，眼睛实在受不了。",
+        "pinyin": "Bù guò tiān tiān duì zhe diàn nǎo kàn, yǎn jīng shí zài shòu bu liǎo.",
+        "en": "But staring at the computer every day, the eyes really can't take it."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "日记",
+    "pinyin": "rì jì",
+    "meaning": "n. diary, journal",
+    "usage": [
+      {
+        "zh": "她每天晚上都写日记。",
+        "pinyin": "Tā měi tiān wǎn shàng dōu xiě rì jì.",
+        "en": "She writes in her diary every evening."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "安全",
+    "pinyin": "ān quán",
+    "meaning": "adj. safe, secure",
+    "usage": [
+      {
+        "zh": "过马路的时候要注意安全。",
+        "pinyin": "Guò mǎ lù de shí hòu yào zhù yì ān quán.",
+        "en": "Be careful about safety when crossing the road."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "密码",
+    "pinyin": "mì mǎ",
+    "meaning": "n. password, PIN",
+    "usage": [
+      {
+        "zh": "你的密码太简单了，别人容易猜到。",
+        "pinyin": "Nǐ de mì mǎ tài jiǎn dān le, bié rén róng yì cāi dào.",
+        "en": "Your password is too simple, others can easily guess it."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "允许",
+    "pinyin": "yǔn xǔ",
+    "meaning": "v. to allow, to permit",
+    "usage": [
+      {
+        "zh": "这里不允许吸烟。",
+        "pinyin": "Zhè lǐ bù yǔn xǔ xī yān.",
+        "en": "Smoking is not allowed here."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "起飞",
+    "pinyin": "qǐfēi",
+    "meaning": "v. to take off (aircraft)",
+    "usage": [
+      {
+        "zh": "飞机就要起飞了，请大家关好手机。",
+        "pinyin": "Fēijī jiù yào qǐfēi le, qǐng dàjiā guān hǎo shǒujī.",
+        "en": "The plane is about to take off — please turn off your phones."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "降落",
+    "pinyin": "jiàngluò",
+    "meaning": "v. to land, descend",
+    "usage": [
+      {
+        "zh": "飞机将于半小时后在首都国际机场降落。",
+        "pinyin": "Fēijī jiāng yú bàn xiǎoshí hòu zài Shǒudū Guójì Jīchǎng jiàngluò.",
+        "en": "The plane will land at Capital International Airport in half an hour."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "知识",
+    "pinyin": "zhīshi",
+    "meaning": "n. knowledge",
+    "usage": [
+      {
+        "zh": "读书可以让我们获得各种各样的知识。",
+        "pinyin": "Dúshū kěyǐ ràng wǒmen huòdé gèzhǒng-gèyàng de zhīshi.",
+        "en": "Reading lets us acquire all kinds of knowledge."
+      }
+    ],
+    "lesson": "Slides_20260408"
+  },
+  {
+    "hanzi": "互联网",
+    "pinyin": "hù lián wǎng",
+    "meaning": "n. internet",
+    "usage": [
+      {
+        "zh": "电脑和互联网技术的发展，确实让学生们的学习方式发生了很多的变化。",
+        "pinyin": "Diàn nǎo hé hù lián wǎng jì shù de fā zhǎn, què shí ràng xué shēng men de xué xí fāng shì fā shēng le hěn duō de biàn huà.",
+        "en": "The development of computers and internet technology has truly changed the way students learn in many ways."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "技术",
+    "pinyin": "jì shù",
+    "meaning": "n. technology, skill, technique",
+    "usage": [
+      {
+        "zh": "电脑和互联网技术的发展，确实让学生们的学习方式发生了很多的变化。",
+        "pinyin": "Diàn nǎo hé hù lián wǎng jì shù de fā zhǎn, què shí ràng xué shēng men de xué xí fāng shì fā shēng le hěn duō de biàn huà.",
+        "en": "The development of computers and internet technology has truly changed the way students learn in many ways."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "发展",
+    "pinyin": "fā zhǎn",
+    "meaning": "v./n. to develop; development",
+    "usage": [
+      {
+        "zh": "电脑和互联网技术的发展，确实让学生们的学习方式发生了很多的变化。",
+        "pinyin": "Diàn nǎo hé hù lián wǎng jì shù de fā zhǎn, què shí ràng xué shēng men de xué xí fāng shì fā shēng le hěn duō de biàn huà.",
+        "en": "The development of computers and internet technology has truly changed the way students learn in many ways."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "遇到",
+    "pinyin": "yù dào",
+    "meaning": "v. to encounter, to run into (a problem/person)",
+    "usage": [
+      {
+        "zh": "现在的大学生，遇到不明白的问题，可以马上在网上找到答案。",
+        "pinyin": "Xiàn zài de dà xué shēng, yù dào bù míng bái de wèn tí, kě yǐ mǎ shàng zài wǎng shàng zhǎo dào dá àn.",
+        "en": "Today's university students, when they encounter a problem they don't understand, can immediately find the answer online."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "调查",
+    "pinyin": "diào chá",
+    "meaning": "v./n. to investigate; survey, investigation",
+    "usage": [
+      {
+        "zh": "根据调查，70%的人，遇到问题，首先想到的，就是上网找答案。",
+        "pinyin": "Gēn jù diào chá, 70% de rén, yù dào wèn tí, shǒu xiān xiǎng dào de, jiù shì shàng wǎng zhǎo dá àn.",
+        "en": "According to surveys, 70% of people, when they encounter a problem, the first thing they think of is going online to find an answer."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "答案",
+    "pinyin": "dá àn",
+    "meaning": "n. answer, solution",
+    "usage": [
+      {
+        "zh": "现在的大学生，遇到不明白的问题，可以马上在网上找到答案。",
+        "pinyin": "Xiàn zài de dà xué shēng, yù dào bù míng bái de wèn tí, kě yǐ mǎ shàng zài wǎng shàng zhǎo dào dá àn.",
+        "en": "Today's university students can immediately find answers online when they encounter something they don't understand."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "解决",
+    "pinyin": "jiě jué",
+    "meaning": "v. to solve, to resolve",
+    "usage": [
+      {
+        "zh": "几秒就把问题解决了。",
+        "pinyin": "Jǐ miǎo jiù bǎ wèn tí jiě jué le.",
+        "en": "The problem is solved in just a few seconds."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "方便",
+    "pinyin": "fāng biàn",
+    "meaning": "adj. convenient, easy",
+    "usage": [
+      {
+        "zh": "这比我们上学的时候方便多了。",
+        "pinyin": "Zhè bǐ wǒ men shàng xué de shí hòu fāng biàn duō le.",
+        "en": "This is much more convenient than when we were students."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "尤其",
+    "pinyin": "yóu qí",
+    "meaning": "adv. especially, particularly",
+    "usage": [
+      {
+        "zh": "现在的人，尤其是大学生，都会使用电脑。",
+        "pinyin": "Xiàn zài de rén, yóu qí shì dà xué shēng, dōu huì shǐ yòng diàn nǎo.",
+        "en": "People nowadays, especially university students, all know how to use computers."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "根据",
+    "pinyin": "gēn jù",
+    "meaning": "prep. according to, based on",
+    "usage": [
+      {
+        "zh": "根据调查，70%的人遇到问题，首先想到的就是上网找答案。",
+        "pinyin": "Gēn jù diào chá, 70% de rén yù dào wèn tí, shǒu xiān xiǎng dào de jiù shì shàng wǎng zhǎo dá àn.",
+        "en": "According to surveys, 70% of people's first instinct when facing a problem is to go online for answers."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "首先",
+    "pinyin": "shǒu xiān",
+    "meaning": "adv. first of all, first and foremost",
+    "usage": [
+      {
+        "zh": "遇到问题，首先想到的，就是上网找答案。",
+        "pinyin": "Yù dào wèn tí, shǒu xiān xiǎng dào de, jiù shì shàng wǎng zhǎo dá àn.",
+        "en": "When facing a problem, the first thing that comes to mind is going online to find an answer."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "不仅…而且",
+    "pinyin": "bù jǐn…ér qiě",
+    "meaning": "conj. not only…but also",
+    "usage": [
+      {
+        "zh": "不仅是学习方式，而且生活方式也发生了很大的改变。",
+        "pinyin": "Bù jǐn shì xué xí fāng shì, ér qiě shēng huó fāng shì yě fā shēng le hěn dà de gǎi biàn.",
+        "en": "Not only the way of studying, but also the way of living has changed greatly."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "越来越",
+    "pinyin": "yuè lái yuè",
+    "meaning": "adv. more and more",
+    "usage": [
+      {
+        "zh": "现在越来越多的学生喜欢在网上写日记和发照片。",
+        "pinyin": "Xiàn zài yuè lái yuè duō de xué shēng xǐ huān zài wǎng shàng xiě rì jì hé fā zhào piàn.",
+        "en": "More and more students nowadays enjoy writing diaries and posting photos online."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "及时",
+    "pinyin": "jí shí",
+    "meaning": "adv. promptly, in time, without delay",
+    "usage": [
+      {
+        "zh": "这样可以让朋友及时了解自己的生活。",
+        "pinyin": "Zhè yàng kě yǐ ràng péng yǒu jí shí liǎo jiě zì jǐ de shēng huó.",
+        "en": "This way friends can keep up with your life promptly."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "了解",
+    "pinyin": "liǎo jiě",
+    "meaning": "v. to understand, to get to know, to learn about",
+    "usage": [
+      {
+        "zh": "这样可以让朋友及时了解自己的生活。",
+        "pinyin": "Zhè yàng kě yǐ ràng péng yǒu jí shí liǎo jiě zì jǐ de shēng huó.",
+        "en": "This way friends can keep up with your life promptly."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "沟通",
+    "pinyin": "gōu tōng",
+    "meaning": "v. to communicate, to connect",
+    "usage": [
+      {
+        "zh": "能方便大家沟通交流，还能让大家成为好朋友。",
+        "pinyin": "Néng fāng biàn dà jiā gōu tōng jiāo liú, hái néng ràng dà jiā chéng wéi hǎo péng yǒu.",
+        "en": "It makes it easy for everyone to communicate and can even help people become good friends."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "交流",
+    "pinyin": "jiāo liú",
+    "meaning": "v. to exchange, to communicate, to interact",
+    "usage": [
+      {
+        "zh": "能方便大家沟通交流，还能让大家成为好朋友。",
+        "pinyin": "Néng fāng biàn dà jiā gōu tōng jiāo liú, hái néng ràng dà jiā chéng wéi hǎo péng yǒu.",
+        "en": "It makes it easy for everyone to communicate and can even help people become good friends."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "好处",
+    "pinyin": "hǎo chù",
+    "meaning": "n. benefit, advantage, good point",
+    "usage": [
+      {
+        "zh": "在网上写日记有哪些好处？",
+        "pinyin": "Zài wǎng shàng xiě rì jì yǒu nǎ xiē hǎo chù?",
+        "en": "What are the benefits of writing a diary online?"
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "座",
+    "pinyin": "zuò",
+    "meaning": "m. measure word for bridges, mountains, buildings",
+    "usage": [
+      {
+        "zh": "我们城市有一座很漂亮的桥。",
+        "pinyin": "Wǒ men chéng shì yǒu yī zuò hěn piào liàng de qiáo.",
+        "en": "Our city has a very beautiful bridge."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "桥",
+    "pinyin": "qiáo",
+    "meaning": "n. bridge",
+    "usage": [
+      {
+        "zh": "这座桥已经有一百年的历史了。",
+        "pinyin": "Zhè zuò qiáo yǐ jīng yǒu yī bǎi nián de lì shǐ le.",
+        "en": "This bridge already has a hundred years of history."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "危险",
+    "pinyin": "wēi xiǎn",
+    "meaning": "adj. dangerous",
+    "usage": [
+      {
+        "zh": "一边走路一边看手机很危险。",
+        "pinyin": "Yī biān zǒu lù yī biān kàn shǒu jī hěn wēi xiǎn.",
+        "en": "Walking while looking at your phone is very dangerous."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "接着",
+    "pinyin": "jiē zhe",
+    "meaning": "adv. then, immediately after that, to continue",
+    "usage": [
+      {
+        "zh": "这本书的内容非常有趣，你看完以后先不要还，我接着看。",
+        "pinyin": "Zhè běn shū de nèi róng fēi cháng yǒu qù, nǐ kàn wán yǐ hòu xiān bù yào huán, wǒ jiē zhe kàn.",
+        "en": "The content of this book is very interesting — don't return it after you finish, I'll read it next."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "警察",
+    "pinyin": "jǐng chá",
+    "meaning": "n. police, police officer",
+    "usage": [
+      {
+        "zh": "他打电话叫警察来帮忙。",
+        "pinyin": "Tā dǎ diàn huà jiào jǐng chá lái bāng máng.",
+        "en": "He called the police for help."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "抓",
+    "pinyin": "zhuā",
+    "meaning": "v. to catch, to grab, to arrest",
+    "usage": [
+      {
+        "zh": "警察把小偷抓住了。",
+        "pinyin": "Jǐng chá bǎ xiǎo tōu zhuā zhù le.",
+        "en": "The police caught the thief."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "咸",
+    "pinyin": "xián",
+    "meaning": "adj. salty",
+    "usage": [
+      {
+        "zh": "这道菜太咸了，我喝了很多水。",
+        "pinyin": "Zhè dào cài tài xián le, wǒ hē le hěn duō shuǐ.",
+        "en": "This dish is too salty, I drank a lot of water."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "矿泉水",
+    "pinyin": "kuàng quán shuǐ",
+    "meaning": "n. mineral water",
+    "usage": [
+      {
+        "zh": "运动以后，他买了一瓶矿泉水。",
+        "pinyin": "Yùn dòng yǐ hòu, tā mǎi le yī píng kuàng quán shuǐ.",
+        "en": "After exercising, he bought a bottle of mineral water."
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "愿意",
+    "pinyin": "yuàn yì",
+    "meaning": "v. to be willing to, to want to",
+    "usage": [
+      {
+        "zh": "你愿意和一个赢了就高兴，输了就生气的人打球吗？",
+        "pinyin": "Nǐ yuàn yì hé yī gè yíng le jiù gāo xìng, shū le jiù shēng qì de rén dǎ qiú ma?",
+        "en": "Are you willing to play ball with someone who is happy when they win and angry when they lose?"
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "赢",
+    "pinyin": "yíng",
+    "meaning": "v. to win",
+    "usage": [
+      {
+        "zh": "你愿意和一个赢了就高兴，输了就生气的人打球吗？",
+        "pinyin": "Nǐ yuàn yì hé yī gè yíng le jiù gāo xìng, shū le jiù shēng qì de rén dǎ qiú ma?",
+        "en": "Are you willing to play ball with someone who is happy when they win and angry when they lose?"
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "输",
+    "pinyin": "shū",
+    "meaning": "v. to lose (a game or competition)",
+    "usage": [
+      {
+        "zh": "你愿意和一个赢了就高兴，输了就生气的人打球吗？",
+        "pinyin": "Nǐ yuàn yì hé yī gè yíng le jiù gāo xìng, shū le jiù shēng qì de rén dǎ qiú ma?",
+        "en": "Are you willing to play ball with someone who is happy when they win and angry when they lose?"
+      }
+    ],
+    "lesson": "Slides_20260415"
+  },
+  {
+    "hanzi": "然后",
+    "pinyin": "rán hòu",
+    "meaning": "adv. then, after that",
+    "usage": [
+      {
+        "zh": "我们先去吃晚饭，然后看电影，好吗？",
+        "pinyin": "Wǒ men xiān qù chī wǎn fàn, rán hòu kàn diàn yǐng, hǎo ma?",
+        "en": "Let's first go eat dinner, then watch a movie, shall we?"
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "查",
+    "pinyin": "chá",
+    "meaning": "v. to look up, to check",
+    "usage": [
+      {
+        "zh": "遇到不认识的字，我会先查字典，然后写下来。",
+        "pinyin": "Yù dào bù rèn shí de zì, wǒ huì xiān chá zì diǎn, rán hòu xiě xià lái.",
+        "en": "When I encounter a character I don't know, I look it up in the dictionary first, then write it down."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "字典",
+    "pinyin": "zì diǎn",
+    "meaning": "n. dictionary",
+    "usage": [
+      {
+        "zh": "遇到不认识的字，我会先查字典，然后写下来。",
+        "pinyin": "Yù dào bù rèn shí de zì, wǒ huì xiān chá zì diǎn, rán hòu xiě xià lái.",
+        "en": "When I encounter a character I don't know, I look it up in the dictionary first, then write it down."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "鲜美",
+    "pinyin": "xiān měi",
+    "meaning": "adj. delicious, fresh and tasty",
+    "usage": [
+      {
+        "zh": "北方人过年时爱吃饺子，是因为饺子味道鲜美。",
+        "pinyin": "Běi fāng rén guò nián shí ài chī jiǎo zi, shì yīn wèi jiǎo zi wèi dào xiān měi.",
+        "en": "Northerners love to eat dumplings during the New Year because dumplings taste so delicious."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "普遍",
+    "pinyin": "pǔ biàn",
+    "meaning": "adj. universal, widespread, common",
+    "usage": [
+      {
+        "zh": "手机已经成了人们普遍使用的联系方法。",
+        "pinyin": "Shǒu jī yǐ jīng chéng le rén men pǔ biàn shǐ yòng de lián xì fāng fǎ.",
+        "en": "Smartphones have become the universally used method of contact for people."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "联系",
+    "pinyin": "lián xì",
+    "meaning": "v./n. to contact; connection, contact",
+    "usage": [
+      {
+        "zh": "手机已经成了人们普遍使用的联系方法。",
+        "pinyin": "Shǒu jī yǐ jīng chéng le rén men pǔ biàn shǐ yòng de lián xì fāng fǎ.",
+        "en": "Smartphones have become the universally used method of contact for people."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "锻炼",
+    "pinyin": "duàn liàn",
+    "meaning": "v. to exercise, to work out, to train",
+    "usage": [
+      {
+        "zh": "骑自行车是一种很好的锻炼身体方式。",
+        "pinyin": "Qí zì xíng chē shì yī zhǒng hěn hǎo de duàn liàn shēn tǐ fāng shì.",
+        "en": "Riding a bicycle is a great way to exercise your body."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "顾客",
+    "pinyin": "gù kè",
+    "meaning": "n. customer, client",
+    "usage": [
+      {
+        "zh": "买东西时，顾客会考虑它的质量和价格。",
+        "pinyin": "Mǎi dōng xi shí, gù kè huì kǎo lǜ tā de zhì liàng hé jià gé.",
+        "en": "When shopping, customers consider the quality and price of items."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "质量",
+    "pinyin": "zhì liàng",
+    "meaning": "n. quality",
+    "usage": [
+      {
+        "zh": "买东西时，顾客会考虑它的质量和价格。",
+        "pinyin": "Mǎi dōng xi shí, gù kè huì kǎo lǜ tā de zhì liàng hé jià gé.",
+        "en": "When shopping, customers consider the quality and price of items."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "付款",
+    "pinyin": "fù kuǎn",
+    "meaning": "v. to pay, to make a payment",
+    "usage": [
+      {
+        "zh": "你还可以用手机来听音乐、看电影、阅读、玩游戏和付款买东西。",
+        "pinyin": "Nǐ hái kě yǐ yòng shǒu jī lái tīng yīn yuè, kàn diàn yǐng, yuè dú, wán yóu xì hé fù kuǎn mǎi dōng xi.",
+        "en": "You can also use your phone to listen to music, watch movies, read, play games, and make payments."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "举",
+    "pinyin": "jǔ",
+    "meaning": "v. to raise; to give (an example), to enumerate",
+    "usage": [
+      {
+        "zh": "老师让我们举一个例子来说明这个语法点。",
+        "pinyin": "Lǎo shī ràng wǒ men jǔ yī gè lì zi lái shuō míng zhè gè yǔ fǎ diǎn.",
+        "en": "The teacher asked us to give an example to explain this grammar point."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "迷路",
+    "pinyin": "mí lù",
+    "meaning": "v. to get lost, to lose one's way",
+    "usage": [
+      {
+        "zh": "我第一次来这个城市，结果迷路了。",
+        "pinyin": "Wǒ dì yī cì lái zhè gè chéng shì, jié guǒ mí lù le.",
+        "en": "It was my first time in this city and I ended up getting lost."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "地址",
+    "pinyin": "dì zhǐ",
+    "meaning": "n. address",
+    "usage": [
+      {
+        "zh": "你能把你家的地址发给我吗？",
+        "pinyin": "Nǐ néng bǎ nǐ jiā de dì zhǐ fā gěi wǒ ma?",
+        "en": "Can you send me your home address?"
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "地点",
+    "pinyin": "dì diǎn",
+    "meaning": "n. place, location, site",
+    "usage": [
+      {
+        "zh": "我们见面的地点定在咖啡店，好吗？",
+        "pinyin": "Wǒ men jiàn miàn de dì diǎn dìng zài kā fēi diàn, hǎo ma?",
+        "en": "Let's set the meeting place at the coffee shop, shall we?"
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "除此之外",
+    "pinyin": "chú cǐ zhī wài",
+    "meaning": "expr. besides this, in addition to this, apart from this",
+    "usage": [
+      {
+        "zh": "手机已经成了人们普遍使用的联系方法。除此之外，你还可以用它来听音乐、看电影、阅读和玩游戏。",
+        "pinyin": "Shǒu jī yǐ jīng chéng le rén men pǔ biàn shǐ yòng de lián xì fāng fǎ. Chú cǐ zhī wài, nǐ hái kě yǐ yòng tā lái tīng yīn yuè, kàn diàn yǐng, yuè dú hé wán yóu xì.",
+        "en": "Smartphones have become the universally used method of contact. Besides this, you can also use them to listen to music, watch movies, read, and play games."
+      }
+    ],
+    "lesson": "Slides_20260422"
+  },
+  {
+    "hanzi": "世纪",
+    "pinyin": "shìjì",
+    "meaning": "n. century",
+    "usage": [
+      {
+        "zh": "二十一世纪是科技发展最快的时代。",
+        "pinyin": "Èrshíyī shìjì shì kējì fāzhǎn zuì kuài de shídài.",
+        "en": "The 21st century is the era of the fastest technological development."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "邮局",
+    "pinyin": "yóujú",
+    "meaning": "n. post office",
+    "usage": [
+      {
+        "zh": "我要去邮局寄一封信。",
+        "pinyin": "Wǒ yào qù yóujú jì yī fēng xìn.",
+        "en": "I need to go to the post office to send a letter."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "收",
+    "pinyin": "shōu",
+    "meaning": "v. to receive",
+    "usage": [
+      {
+        "zh": "我今天收到了一封重要的信。",
+        "pinyin": "Wǒ jīntiān shōu dào le yī fēng zhòngyào de xìn.",
+        "en": "I received an important letter today."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "信封",
+    "pinyin": "xìnfēng",
+    "meaning": "n. envelope",
+    "usage": [
+      {
+        "zh": "请把信放进信封里，然后写上地址。",
+        "pinyin": "Qǐng bǎ xìn fàng jìn xìnfēng lǐ, ránhòu xiě shàng dìzhǐ.",
+        "en": "Please put the letter in the envelope and then write the address."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "网站",
+    "pinyin": "wǎngzhàn",
+    "meaning": "n. website",
+    "usage": [
+      {
+        "zh": "你可以在这个网站上找到很多有用的信息。",
+        "pinyin": "Nǐ kěyǐ zài zhège wǎngzhàn shàng zhǎodào hěn duō yǒuyòng de xìnxī.",
+        "en": "You can find a lot of useful information on this website."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "信息",
+    "pinyin": "xìnxī",
+    "meaning": "n. information, news",
+    "usage": [
+      {
+        "zh": "互联网让我们可以快速获得各种信息。",
+        "pinyin": "Hùliánwǎng ràng wǒmen kěyǐ kuàisù huòdé gèzhǒng xìnxī.",
+        "en": "The internet allows us to quickly access all kinds of information."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "特点",
+    "pinyin": "tèdiǎn",
+    "meaning": "n. characteristic, feature",
+    "usage": [
+      {
+        "zh": "教学生时，要根据学生的特点选择不同的方法。",
+        "pinyin": "Jiāo xuésheng shí, yào gēnjù xuésheng de tèdiǎn xuǎnzé bùtóng de fāngfǎ.",
+        "en": "When teaching students, you should choose different methods based on the students' characteristics."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "优点",
+    "pinyin": "yōudiǎn",
+    "meaning": "n. strong point, advantage",
+    "usage": [
+      {
+        "zh": "他的优点是诚实、勇敢，缺点是太粗心了。",
+        "pinyin": "Tā de yōudiǎn shì chéngshí, yǒnggǎn, quēdiǎn shì tài cūxīn le.",
+        "en": "His strong points are honesty and bravery; his weakness is being too careless."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "缺点",
+    "pinyin": "quēdiǎn",
+    "meaning": "n. weakness, shortcoming",
+    "usage": [
+      {
+        "zh": "人应该了解自己的缺点，并且要努力改掉缺点。",
+        "pinyin": "Rén yīnggāi liǎojiě zìjǐ de quēdiǎn, bìngqiě yào nǔlì gǎi diào quēdiǎn.",
+        "en": "People should understand their own shortcomings and strive to correct them."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "重点",
+    "pinyin": "zhòngdiǎn",
+    "meaning": "n. key point, focus",
+    "usage": [
+      {
+        "zh": "因为时间有限，我就简单说明一下重点内容。",
+        "pinyin": "Yīnwèi shíjiān yǒuxiàn, wǒ jiù jiǎndān shuōmíng yīxià zhòngdiǎn nèiróng.",
+        "en": "Because time is limited, I'll just briefly explain the key points."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "记者",
+    "pinyin": "jìzhě",
+    "meaning": "n. journalist, reporter",
+    "usage": [
+      {
+        "zh": "你联系李记者了吗？联系了，我已经通知他，地点改到首都饭店了。",
+        "pinyin": "Nǐ liánxì Lǐ jìzhě le ma? Liánxì le, wǒ yǐjīng tōngzhī tā, dìdiǎn gǎi dào shǒudū fàndiàn le.",
+        "en": "Did you contact Reporter Li? Yes, I already notified him — the location has been changed to the Capital Hotel."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "准时",
+    "pinyin": "zhǔnshí",
+    "meaning": "adv. on time, punctual",
+    "usage": [
+      {
+        "zh": "五月七号上午八点有讨论会，请大家准时参加。",
+        "pinyin": "Wǔ yuè qī hào shàngwǔ bā diǎn yǒu tǎolùnhuì, qǐng dàjiā zhǔnshí cānjiā.",
+        "en": "There is a discussion meeting on May 7th at 8 a.m. — please attend on time."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "有限",
+    "pinyin": "yǒuxiàn",
+    "meaning": "adj. limited",
+    "usage": [
+      {
+        "zh": "因为时间有限，这份材料我就不详细介绍了。",
+        "pinyin": "Yīnwèi shíjiān yǒuxiàn, zhè fèn cáiliào wǒ jiù bù xiángxì jièshào le.",
+        "en": "Because time is limited, I won't introduce this material in detail."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "材料",
+    "pinyin": "cáiliào",
+    "meaning": "n. material, document",
+    "usage": [
+      {
+        "zh": "这份材料很重要，请大家认真阅读。",
+        "pinyin": "Zhè fèn cáiliào hěn zhòngyào, qǐng dàjiā rènzhēn yuèdú.",
+        "en": "This document is very important — please read it carefully."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "诚实",
+    "pinyin": "chéngshí",
+    "meaning": "adj. honest",
+    "usage": [
+      {
+        "zh": "他的优点是诚实、勇敢，缺点是太粗心了。",
+        "pinyin": "Tā de yōudiǎn shì chéngshí, yǒnggǎn, quēdiǎn shì tài cūxīn le.",
+        "en": "His strengths are being honest and brave; his weakness is being too careless."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "勇敢",
+    "pinyin": "yǒnggǎn",
+    "meaning": "adj. brave",
+    "usage": [
+      {
+        "zh": "他的优点是诚实、勇敢，缺点是太粗心了。",
+        "pinyin": "Tā de yōudiǎn shì chéngshí, yǒnggǎn, quēdiǎn shì tài cūxīn le.",
+        "en": "His strengths are being honest and brave; his weakness is being too careless."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "上帝",
+    "pinyin": "shàngdì",
+    "meaning": "n. God",
+    "usage": [
+      {
+        "zh": "很多人认为做梦是上帝要告诉他们以后会发生的事情。",
+        "pinyin": "Hěn duō rén rènwéi zuòmèng shì shàngdì yào gàosù tāmen yǐhòu huì fāshēng de shìqing.",
+        "en": "Many people believe that dreams are God telling them what will happen in the future."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "可惜",
+    "pinyin": "kěxī",
+    "meaning": "adv. unfortunately, what a pity",
+    "usage": [
+      {
+        "zh": "很多人都试着对梦进行解释，可惜现在还没有一个科学的说法。",
+        "pinyin": "Hěn duō rén dōu shìzhe duì mèng jìnxíng jiěshì, kěxī xiànzài hái méiyǒu yī gè kēxué de shuōfǎ.",
+        "en": "Many people have tried to interpret dreams, but unfortunately there is still no scientific explanation."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "估计",
+    "pinyin": "gūjì",
+    "meaning": "v. to estimate, reckon",
+    "usage": [
+      {
+        "zh": "书这么厚，我估计看不完了。",
+        "pinyin": "Shū zhème hòu, wǒ gūjì kàn bù wán le.",
+        "en": "The book is so thick — I reckon I won't be able to finish it."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "改掉",
+    "pinyin": "gǎi diào",
+    "meaning": "v. to correct, get rid of (a habit)",
+    "usage": [
+      {
+        "zh": "人应该努力改掉自己的缺点。",
+        "pinyin": "Rén yīnggāi nǔlì gǎi diào zìjǐ de quēdiǎn.",
+        "en": "People should strive to get rid of their own shortcomings."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "厚",
+    "pinyin": "hòu",
+    "meaning": "adj. thick",
+    "usage": [
+      {
+        "zh": "书这么厚，我估计看不完了。",
+        "pinyin": "Shū zhème hòu, wǒ gūjì kàn bù wán le.",
+        "en": "The book is so thick — I reckon I won't be able to finish it."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "薄",
+    "pinyin": "báo",
+    "meaning": "adj. thin",
+    "usage": [
+      {
+        "zh": "这件衣服太薄了，冬天穿会很冷。",
+        "pinyin": "Zhè jiàn yīfu tài báo le, dōngtiān chuān huì hěn lěng.",
+        "en": "This piece of clothing is too thin — it'll be very cold to wear in winter."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "京剧",
+    "pinyin": "jīngjù",
+    "meaning": "n. Peking opera",
+    "usage": [
+      {
+        "zh": "我知道中国功夫很厉害，京剧也很有特点。",
+        "pinyin": "Wǒ zhīdào Zhōngguó gōngfu hěn lìhai, jīngjù yě hěn yǒu tèdiǎn.",
+        "en": "I know Chinese kung fu is impressive, and Peking opera is very distinctive too."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "并且",
+    "pinyin": "bìngqiě",
+    "meaning": "conj. and, moreover",
+    "usage": [
+      {
+        "zh": "不仅要看到自己的优点，并且要努力改掉缺点。",
+        "pinyin": "Bùjǐn yào kàndào zìjǐ de yōudiǎn, bìngqiě yào nǔlì gǎi diào quēdiǎn.",
+        "en": "You should not only see your strengths, but also work to correct your shortcomings."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "选择",
+    "pinyin": "xuǎnzé",
+    "meaning": "v. to choose, select",
+    "usage": [
+      {
+        "zh": "要根据学生的特点选择不同的方法。",
+        "pinyin": "Yào gēnjù xuésheng de tèdiǎn xuǎnzé bùtóng de fāngfǎ.",
+        "en": "You should choose different methods based on the students' characteristics."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "讨论",
+    "pinyin": "tǎolùn",
+    "meaning": "v. to discuss",
+    "usage": [
+      {
+        "zh": "明天上午八点有中国文化讨论会。",
+        "pinyin": "Míngtiān shàngwǔ bā diǎn yǒu Zhōngguó wénhuà tǎolùnhuì.",
+        "en": "There's a Chinese culture discussion meeting tomorrow at 8 a.m."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "会议室",
+    "pinyin": "huìyìshì",
+    "meaning": "n. meeting room",
+    "usage": [
+      {
+        "zh": "地点在图书馆三楼会议室，请大家准时参加。",
+        "pinyin": "Dìdiǎn zài túshūguǎn sān lóu huìyìshì, qǐng dàjiā zhǔnshí cānjiā.",
+        "en": "The venue is the third-floor meeting room of the library — please attend on time."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "详细",
+    "pinyin": "xiángxì",
+    "meaning": "adj. detailed",
+    "usage": [
+      {
+        "zh": "因为时间有限，这份材料我就不详细介绍了。",
+        "pinyin": "Yīnwèi shíjiān yǒuxiàn, zhè fèn cáiliào wǒ jiù bù xiángxì jièshào le.",
+        "en": "Because time is limited, I won't introduce this material in detail."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "印象",
+    "pinyin": "yìnxiàng",
+    "meaning": "n. impression",
+    "usage": [
+      {
+        "zh": "你对小李的印象怎么样？",
+        "pinyin": "Nǐ duì Xiǎo Lǐ de yìnxiàng zěnmeyàng?",
+        "en": "What's your impression of Xiao Li?"
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "解释",
+    "pinyin": "jiěshì",
+    "meaning": "v/n. to explain; explanation",
+    "usage": [
+      {
+        "zh": "人们对梦的解释的研究结果是什么？",
+        "pinyin": "Rénmen duì mèng de jiěshì de yánjiū jiéguǒ shì shénme?",
+        "en": "What are the research findings on people's interpretations of dreams?"
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "研究",
+    "pinyin": "yánjiū",
+    "meaning": "v/n. to research; research",
+    "usage": [
+      {
+        "zh": "很多人都在研究梦到底代表什么。",
+        "pinyin": "Hěn duō rén dōu zài yánjiū mèng dàodǐ dàibiǎo shénme.",
+        "en": "Many people are researching what dreams actually represent."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "奇怪",
+    "pinyin": "qíguài",
+    "meaning": "adj. strange, odd",
+    "usage": [
+      {
+        "zh": "昨天晚上我做了一个特别奇怪的梦。",
+        "pinyin": "Zuótiān wǎnshang wǒ zuò le yī gè tèbié qíguài de mèng.",
+        "en": "Last night I had a particularly strange dream."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "突然",
+    "pinyin": "tūrán",
+    "meaning": "adv. suddenly",
+    "usage": [
+      {
+        "zh": "我梦到自己在桥上走，突然开过来一辆车。",
+        "pinyin": "Wǒ mèng dào zìjǐ zài qiáo shàng zǒu, tūrán kāi guòlái yī liàng chē.",
+        "en": "I dreamed I was walking on a bridge when suddenly a car came speeding toward me."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "抓住",
+    "pinyin": "zhuāzhù",
+    "meaning": "v. to catch hold of, seize",
+    "usage": [
+      {
+        "zh": "我梦见跟警察一起抓住了一个坏人。",
+        "pinyin": "Wǒ mèngjiàn gēn jǐngchá yīqǐ zhuāzhù le yī gè huàirén.",
+        "en": "I dreamed I caught a bad guy together with the police."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "睡醒",
+    "pinyin": "shuìxǐng",
+    "meaning": "v. to wake up",
+    "usage": [
+      {
+        "zh": "有的人睡醒之后还记得梦里的事情。",
+        "pinyin": "Yǒu de rén shuìxǐng zhīhòu hái jìde mèng lǐ de shìqing.",
+        "en": "Some people still remember what happened in their dreams after waking up."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "整个",
+    "pinyin": "zhěnggè",
+    "meaning": "adj. whole, entire",
+    "usage": [
+      {
+        "zh": "那天晚上我梦见自己整个晚上都在找商店。",
+        "pinyin": "Nà tiān wǎnshang wǒ mèngjiàn zìjǐ zhěnggè wǎnshang dōu zài zhǎo shāngdiàn.",
+        "en": "That night I dreamed I spent the entire night looking for a shop."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "甚至",
+    "pinyin": "shènzhì",
+    "meaning": "adv. even, so much so that",
+    "usage": [
+      {
+        "zh": "有些人甚至专门写了这方面的书。",
+        "pinyin": "Yǒuxiē rén shènzhì zhuānmén xiě le zhè fāngmiàn de shū.",
+        "en": "Some people have even written books specifically on this subject."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "科学",
+    "pinyin": "kēxué",
+    "meaning": "n/adj. science; scientific",
+    "usage": [
+      {
+        "zh": "现在还没有一个科学的说法。",
+        "pinyin": "Xiànzài hái méiyǒu yī gè kēxué de shuōfǎ.",
+        "en": "There is still no scientific explanation."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "有道理",
+    "pinyin": "yǒu dàolǐ",
+    "meaning": "phr. to make sense, be reasonable",
+    "usage": [
+      {
+        "zh": "你说的有道理，我一般都是一觉睡到天亮。",
+        "pinyin": "Nǐ shuō de yǒu dàolǐ, wǒ yībān dōu shì yī jiào shuì dào tiānliàng.",
+        "en": "What you say makes sense — I usually sleep straight through till dawn."
+      }
+    ],
+    "lesson": "Slides_20260429"
+  },
+  {
+    "hanzi": "地球村",
+    "pinyin": "dìqiú cūn",
+    "meaning": "n. global village",
+    "usage": [
+      {
+        "zh": "现代科学技术的发展让世界变得越来越小，所以人们把地球叫作「地球村」。",
+        "pinyin": "Xiàndài kējì de fāzhǎn ràng shìjiè biàn de yuèláiyuè xiǎo, suǒyǐ rénmen bǎ dìqiú jiào zuò 「dìqiú cūn」.",
+        "en": "Modern technology has made the world smaller and smaller, so people call the Earth a 'global village'."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "亲戚",
+    "pinyin": "qīnqi",
+    "meaning": "n. relatives",
+    "usage": [
+      {
+        "zh": "中国人搬新家以后，一般都会邀请亲戚朋友到家里吃饭。",
+        "pinyin": "Zhōngguó rén bān xīn jiā yǐhòu, yībān dōu huì yāoqǐng qīnqi péngyou dào jiālǐ chīfàn.",
+        "en": "After Chinese people move into a new home, they usually invite relatives and friends over for a meal."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "邀请",
+    "pinyin": "yāoqǐng",
+    "meaning": "v. to invite",
+    "usage": [
+      {
+        "zh": "他邀请我去参加他的生日聚会。",
+        "pinyin": "Tā yāoqǐng wǒ qù cānjiā tā de shēngrì jùhuì.",
+        "en": "He invited me to his birthday party."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "热闹",
+    "pinyin": "rènao",
+    "meaning": "adj/v. lively; to liven up",
+    "usage": [
+      {
+        "zh": "他们邀请亲戚朋友来家里吃饭，热闹热闹。",
+        "pinyin": "Tāmen yāoqǐng qīnqi péngyou lái jiālǐ chīfàn, rènao rènao.",
+        "en": "They invited relatives and friends over for a meal to liven things up."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "民族",
+    "pinyin": "mínzú",
+    "meaning": "n. ethnic group, nationality",
+    "usage": [
+      {
+        "zh": "中国有56个民族，其中汉族人的数量最多。",
+        "pinyin": "Zhōngguó yǒu wǔshíliù gè mínzú, qízhōng Hànzú rén de shùliàng zuì duō.",
+        "en": "China has 56 ethnic groups, of which the Han people are the most numerous."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "少数民族",
+    "pinyin": "shǎoshù mínzú",
+    "meaning": "n. ethnic minority",
+    "usage": [
+      {
+        "zh": "我们把人数较少的民族叫作「少数民族」。",
+        "pinyin": "Wǒmen bǎ rénshù jiào shǎo de mínzú jiào zuò 「shǎoshù mínzú」.",
+        "en": "We call ethnic groups with smaller populations 'ethnic minorities'."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "巨大",
+    "pinyin": "jùdà",
+    "meaning": "adj. huge, enormous",
+    "usage": [
+      {
+        "zh": "二十一世纪，我们的生活发生了巨大的变化。",
+        "pinyin": "Èrshíyī shìjì, wǒmen de shēnghuó fāshēng le jùdà de biànhuà.",
+        "en": "In the 21st century, our lives have undergone enormous changes."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "原来",
+    "pinyin": "yuánlái",
+    "meaning": "adv. originally, formerly",
+    "usage": [
+      {
+        "zh": "原来寄信需要好几天，现在发电子邮件只需要一分钟。",
+        "pinyin": "Yuánlái jì xìn xūyào hǎo jǐ tiān, xiànzài fā diànzǐ yóujiàn zhǐ xūyào yī fēnzhōng.",
+        "en": "Sending a letter used to take several days; now sending an email takes just one minute."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "寄",
+    "pinyin": "jì",
+    "meaning": "v. to send (by post/mail)",
+    "usage": [
+      {
+        "zh": "我要去邮局寄一个包裹给朋友。",
+        "pinyin": "Wǒ yào qù yóujú jì yī gè bāoguǒ gěi péngyou.",
+        "en": "I'm going to the post office to send a parcel to my friend."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "电子邮件",
+    "pinyin": "diànzǐ yóujiàn",
+    "meaning": "n. email",
+    "usage": [
+      {
+        "zh": "只要在家里上网发电子邮件，国内国外的朋友就能收到。",
+        "pinyin": "Zhǐyào zài jiālǐ shàngwǎng fā diànzǐ yóujiàn, guónèi guówài de péngyou jiù néng shōu dào.",
+        "en": "As long as you go online at home to send an email, friends at home and abroad can receive it."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "获得",
+    "pinyin": "huòdé",
+    "meaning": "v. to obtain, get",
+    "usage": [
+      {
+        "zh": "任何信息都可以在第一时间获得。",
+        "pinyin": "Rènhé xìnxī dōu kěyǐ zài dì yī shíjiān huòdé.",
+        "en": "Any information can be obtained at the earliest opportunity."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "任何",
+    "pinyin": "rènhé",
+    "meaning": "det. any",
+    "usage": [
+      {
+        "zh": "只要打开电脑网站，任何信息都可以在第一时间获得。",
+        "pinyin": "Zhǐyào dǎkāi diànnǎo wǎngzhàn, rènhé xìnxī dōu kěyǐ zài dì yī shíjiān huòdé.",
+        "en": "As long as you open a website on your computer, any information can be obtained immediately."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "第一时间",
+    "pinyin": "dì yī shíjiān",
+    "meaning": "phr. at the earliest opportunity, immediately",
+    "usage": [
+      {
+        "zh": "有什么新消息，我会在第一时间通知你。",
+        "pinyin": "Yǒu shénme xīn xiāoxi, wǒ huì zài dì yī shíjiān tōngzhī nǐ.",
+        "en": "If there's any news, I'll notify you at the earliest opportunity."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "价格",
+    "pinyin": "jiàgé",
+    "meaning": "n. price",
+    "usage": [
+      {
+        "zh": "质量好的东西一般价格也比较高。",
+        "pinyin": "Zhìliàng hǎo de dōngxi yībān jiàgé yě bǐjiào gāo.",
+        "en": "Good-quality things generally have higher prices too."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "上网",
+    "pinyin": "shàngwǎng",
+    "meaning": "v. to go online",
+    "usage": [
+      {
+        "zh": "只要在家里上网发电子邮件，朋友就能收到。",
+        "pinyin": "Zhǐyào zài jiālǐ shàngwǎng fā diànzǐ yóujiàn, péngyou jiù néng shōu dào.",
+        "en": "As long as you go online at home and send an email, your friends will receive it."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "直接",
+    "pinyin": "zhíjiē",
+    "meaning": "adj/adv. direct, directly",
+    "usage": [
+      {
+        "zh": "有些人直接用自己的生日做银行卡的密码。",
+        "pinyin": "Yǒuxiē rén zhíjiē yòng zìjǐ de shēngrì zuò yínhángkǎ de mìmǎ.",
+        "en": "Some people directly use their birthday as their bank card password."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "无论",
+    "pinyin": "wúlùn",
+    "meaning": "conj. no matter, regardless of",
+    "usage": [
+      {
+        "zh": "无论对自己还是对其他人来说，喝完酒开车都很危险。",
+        "pinyin": "Wúlùn duì zìjǐ háishì duì qítā rén lái shuō, hē wán jiǔ kāichē dōu hěn wēixiǎn.",
+        "en": "Whether for yourself or for others, drink-driving is very dangerous."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "盐",
+    "pinyin": "yán",
+    "meaning": "n. salt",
+    "usage": [
+      {
+        "zh": "鸡蛋汤有点儿咸，那我下次少放点儿盐。",
+        "pinyin": "Jīdàn tāng yǒudiǎnr xián, nà wǒ xià cì shǎo fàng diǎnr yán.",
+        "en": "The egg soup is a bit salty — I'll use less salt next time."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "举例",
+    "pinyin": "jǔlì",
+    "meaning": "v. to give an example",
+    "usage": [
+      {
+        "zh": "我们的生活发生了哪些变化？请举例说明。",
+        "pinyin": "Wǒmen de shēnghuó fāshēng le nǎxiē biànhuà? Qǐng jǔlì shuōmíng.",
+        "en": "What changes have taken place in our lives? Please explain with examples."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "汉族",
+    "pinyin": "Hànzú",
+    "meaning": "n. the Han ethnic group",
+    "usage": [
+      {
+        "zh": "中国有56个民族，其中汉族人的数量最多。",
+        "pinyin": "Zhōngguó yǒu wǔshíliù gè mínzú, qízhōng Hànzú rén de shùliàng zuì duō.",
+        "en": "China has 56 ethnic groups, of which the Han are the most numerous."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "坐船",
+    "pinyin": "zuò chuán",
+    "meaning": "v. to travel by boat",
+    "usage": [
+      {
+        "zh": "几千公里以外的国家，以前坐船需要几个月。",
+        "pinyin": "Jǐ qiān gōnglǐ yǐwài de guójiā, yǐqián zuò chuán xūyào jǐ gè yuè.",
+        "en": "Countries thousands of kilometres away used to take months to reach by boat."
+      }
+    ],
+    "lesson": "Slides_20260513"
+  },
+  {
+    "hanzi": "大使馆",
+    "pinyin": "dàshǐguǎn",
+    "meaning": "n. embassy",
+    "usage": [
+      {
+        "zh": "我需要去大使馆申请签证。",
+        "pinyin": "Wǒ xūyào qù dàshǐguǎn shēnqǐng qiānzhèng.",
+        "en": "I need to go to the embassy to apply for a visa."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "签证",
+    "pinyin": "qiānzhèng",
+    "meaning": "n. visa",
+    "usage": [
+      {
+        "zh": "去美国需要提前申请签证。",
+        "pinyin": "Qù Měiguó xūyào tíqián shēnqǐng qiānzhèng.",
+        "en": "You need to apply for a visa in advance to go to the US."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "资料",
+    "pinyin": "zīliào",
+    "meaning": "n. data, materials, documents",
+    "usage": [
+      {
+        "zh": "请把签证资料准备好，然后去大使馆提交。",
+        "pinyin": "Qǐng bǎ qiānzhèng zīliào zhǔnbèi hǎo, ránhòu qù dàshǐguǎn tíjiāo.",
+        "en": "Please prepare the visa documents and then submit them at the embassy."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "硕士",
+    "pinyin": "shuòshì",
+    "meaning": "n. master's degree; master's student",
+    "usage": [
+      {
+        "zh": "他大学毕业以后继续读了硕士。",
+        "pinyin": "Tā dàxué bìyè yǐhòu jìxù dú le shuòshì.",
+        "en": "After graduating from university, he went on to study for a master's degree."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "博士",
+    "pinyin": "bóshì",
+    "meaning": "n. doctorate; PhD student",
+    "usage": [
+      {
+        "zh": "她花了五年时间完成了博士学位。",
+        "pinyin": "Tā huā le wǔ nián shíjiān wánchéng le bóshì xuéwèi.",
+        "en": "She spent five years completing her doctorate."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "学位",
+    "pinyin": "xuéwèi",
+    "meaning": "n. academic degree",
+    "usage": [
+      {
+        "zh": "他拥有硕士和博士两个学位。",
+        "pinyin": "Tā yōngyǒu shuòshì hé bóshì liǎng gè xuéwèi.",
+        "en": "He holds both a master's and a doctoral degree."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "传真",
+    "pinyin": "chuánzhēn",
+    "meaning": "n. fax",
+    "usage": [
+      {
+        "zh": "请把这份材料用传真发给我。",
+        "pinyin": "Qǐng bǎ zhè fèn cáiliào yòng chuánzhēn fā gěi wǒ.",
+        "en": "Please send me this document by fax."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "报名",
+    "pinyin": "bàomíng",
+    "meaning": "v. to register, sign up",
+    "usage": [
+      {
+        "zh": "我想报名参加汉语考试，应该怎么做？",
+        "pinyin": "Wǒ xiǎng bàomíng cānjiā Hànyǔ kǎoshì, yīnggāi zěnme zuò?",
+        "en": "I want to sign up for the Chinese exam — what should I do?"
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "填写",
+    "pinyin": "tiánxiě",
+    "meaning": "v. to fill in (a form)",
+    "usage": [
+      {
+        "zh": "请认真填写这张表格，不要漏掉任何内容。",
+        "pinyin": "Qǐng rènzhēn tiánxiě zhè zhāng biǎogé, bùyào lòudiào rènhé nèiróng.",
+        "en": "Please fill in this form carefully and don't leave anything out."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "表格",
+    "pinyin": "biǎogé",
+    "meaning": "n. form, table",
+    "usage": [
+      {
+        "zh": "申请签证需要填写一张表格。",
+        "pinyin": "Shēnqǐng qiānzhèng xūyào tiánxiě yī zhāng biǎogé.",
+        "en": "Applying for a visa requires filling out a form."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "会员卡",
+    "pinyin": "huìyuánkǎ",
+    "meaning": "n. membership card",
+    "usage": [
+      {
+        "zh": "办了会员卡以后，每次购物都可以打折。",
+        "pinyin": "Bàn le huìyuánkǎ yǐhòu, měi cì gòuwù dōu kěyǐ dǎzhé.",
+        "en": "After getting a membership card, you can get a discount every time you shop."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "邀请信",
+    "pinyin": "yāoqǐngxìn",
+    "meaning": "n. invitation letter",
+    "usage": [
+      {
+        "zh": "申请签证时，有时候需要提供邀请信。",
+        "pinyin": "Shēnqǐng qiānzhèng shí, yǒu shíhou xūyào tígōng yāoqǐngxìn.",
+        "en": "When applying for a visa, you sometimes need to provide an invitation letter."
+      }
+    ],
+    "lesson": "Slides_20260527"
+  },
+  {
+    "hanzi": "参观",
+    "pinyin": "cānguān",
+    "meaning": "v. to visit, look around",
+    "usage": [
+      {
+        "zh": "谢谢您带我参观您的公司。",
+        "pinyin": "Xièxie nín dài wǒ cānguān nín de gōngsī.",
+        "en": "Thank you for taking me on a tour of your company."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "激动",
+    "pinyin": "jīdòng",
+    "meaning": "adj. excited, emotional",
+    "usage": [
+      {
+        "zh": "第一次来中国，我感到非常激动。",
+        "pinyin": "Dì yī cì lái Zhōngguó, wǒ gǎndào fēicháng jīdòng.",
+        "en": "Coming to China for the first time, I felt extremely excited."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "小伙子",
+    "pinyin": "xiǎohuǒzi",
+    "meaning": "n. young man",
+    "usage": [
+      {
+        "zh": "那个小伙子工作很努力，将来一定会成功。",
+        "pinyin": "Nàge xiǎohuǒzi gōngzuò hěn nǔlì, jiānglái yīdìng huì chénggōng.",
+        "en": "That young man works very hard — he will surely succeed in the future."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "代表",
+    "pinyin": "dàibiǎo",
+    "meaning": "v. to represent, stand for",
+    "usage": [
+      {
+        "zh": "他代表公司参加了这次重要的会议。",
+        "pinyin": "Tā dàibiǎo gōngsī cānjiā le zhè cì zhòngyào de huìyì.",
+        "en": "He represented the company at this important meeting."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "恐怕",
+    "pinyin": "kǒngpà",
+    "meaning": "adv. I'm afraid…, I guess…",
+    "usage": [
+      {
+        "zh": "听说明天会下大雨，恐怕足球比赛不能举行了。",
+        "pinyin": "Tīngshuō míngtiān huì xià dà yǔ, kǒngpà zúqiú bǐsài bù néng jǔxíng le.",
+        "en": "I heard it will rain heavily tomorrow — I'm afraid the football match won't be able to go ahead."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "顺利",
+    "pinyin": "shùnlì",
+    "meaning": "adj. smooth, successful",
+    "usage": [
+      {
+        "zh": "如果没有你的帮助，找工作恐怕不会这么顺利。",
+        "pinyin": "Rúguǒ méiyǒu nǐ de bāngzhù, zhǎo gōngzuò kǒngpà bù huì zhème shùnlì.",
+        "en": "Without your help, finding a job probably wouldn't have gone so smoothly."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "成功",
+    "pinyin": "chénggōng",
+    "meaning": "v/n. to succeed; success",
+    "usage": [
+      {
+        "zh": "只要你努力，成功就越来越近。",
+        "pinyin": "Zhǐyào nǐ nǔlì, chénggōng jiù yuèláiyuè jìn.",
+        "en": "As long as you work hard, success gets closer and closer."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "压力",
+    "pinyin": "yālì",
+    "meaning": "n. pressure",
+    "usage": [
+      {
+        "zh": "做生意会遇到各种压力和困难。",
+        "pinyin": "Zuò shēngyi huì yùdào gèzhǒng yālì hé kùnnán.",
+        "en": "Doing business means encountering all kinds of pressure and difficulties."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "机会",
+    "pinyin": "jīhuì",
+    "meaning": "n. opportunity, chance",
+    "usage": [
+      {
+        "zh": "大家的机会都是相同的，关键是你怎么利用。",
+        "pinyin": "Dàjiā de jīhuì dōu shì xiāngtóng de, guānjiàn shì nǐ zěnme lìyòng.",
+        "en": "Everyone has the same opportunities — the key is how you make use of them."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "放弃",
+    "pinyin": "fàngqì",
+    "meaning": "v. to give up, abandon",
+    "usage": [
+      {
+        "zh": "难道您会选小的，放弃大的吗？",
+        "pinyin": "Nándào nín huì xuǎn xiǎo de, fàngqì dà de ma?",
+        "en": "Would you really choose the small one and give up the big one?"
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "赚",
+    "pinyin": "zhuàn",
+    "meaning": "v. to earn (money)",
+    "usage": [
+      {
+        "zh": "你怎么给公司赚了这么多钱？",
+        "pinyin": "Nǐ zěnme gěi gōngsī zhuàn le zhème duō qián?",
+        "en": "How did you earn so much money for the company?"
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "肯定",
+    "pinyin": "kěndìng",
+    "meaning": "adv. certainly, definitely",
+    "usage": [
+      {
+        "zh": "我肯定先吃最大的一块西瓜。",
+        "pinyin": "Wǒ kěndìng xiān chī zuì dà de yī kuài xīguā.",
+        "en": "I would definitely eat the biggest piece of watermelon first."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "西瓜",
+    "pinyin": "xīguā",
+    "meaning": "n. watermelon",
+    "usage": [
+      {
+        "zh": "这里有三块大小不同的西瓜，你会先选哪一块？",
+        "pinyin": "Zhèlǐ yǒu sān kuài dàxiǎo bùtóng de xīguā, nǐ huì xiān xuǎn nǎ yī kuài?",
+        "en": "There are three pieces of watermelon of different sizes here — which one would you pick first?"
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "经验",
+    "pinyin": "jīngyàn",
+    "meaning": "n. experience",
+    "usage": [
+      {
+        "zh": "我的工作经验很少，那份工作我恐怕不能完成。",
+        "pinyin": "Wǒ de gōngzuò jīngyàn hěn shǎo, nà fèn gōngzuò wǒ kǒngpà bù néng wánchéng.",
+        "en": "I have little work experience — I'm afraid I can't handle that job."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "动作",
+    "pinyin": "dòngzuò",
+    "meaning": "n. movement, action",
+    "usage": [
+      {
+        "zh": "这个动作我恐怕做不好，所以比赛前要多练习。",
+        "pinyin": "Zhège dòngzuò wǒ kǒngpà zuò bu hǎo, suǒyǐ bǐsài qián yào duō liànxí.",
+        "en": "I'm afraid I can't do this movement well, so I need to practise more before the match."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "练习",
+    "pinyin": "liànxí",
+    "meaning": "v/n. to practise; exercise",
+    "usage": [
+      {
+        "zh": "这个动作比赛前要多练习。",
+        "pinyin": "Zhège dòngzuò bǐsài qián yào duō liànxí.",
+        "en": "I need to practise this movement more before the match."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "座位",
+    "pinyin": "zuòwèi",
+    "meaning": "n. seat",
+    "usage": [
+      {
+        "zh": "这个会议室的座位恐怕不够，还是换大的吧。",
+        "pinyin": "Zhège huìyìshì de zuòwèi kǒngpà bù gòu, háishì huàn dà de ba.",
+        "en": "I'm afraid there aren't enough seats in this meeting room — let's switch to a bigger one."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "至少",
+    "pinyin": "zhìshǎo",
+    "meaning": "adv. at least",
+    "usage": [
+      {
+        "zh": "坐地铁到公司至少要五十分钟，我怕来不及了。",
+        "pinyin": "Zuò dìtiě dào gōngsī zhìshǎo yào wǔshí fēnzhōng, wǒ pà lái bu jí le.",
+        "en": "It takes at least fifty minutes to get to the office by subway — I'm afraid I'll be late."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "怕",
+    "pinyin": "pà",
+    "meaning": "v. to fear, be afraid",
+    "usage": [
+      {
+        "zh": "我怕你忘了这件事，所以打电话提醒一下你。",
+        "pinyin": "Wǒ pà nǐ wàng le zhè jiàn shì, suǒyǐ dǎ diànhuà tíxǐng yīxià nǐ.",
+        "en": "I was afraid you'd forget this, so I called to remind you."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "举行",
+    "pinyin": "jǔxíng",
+    "meaning": "v. to hold (an event)",
+    "usage": [
+      {
+        "zh": "听说明天会下大雨，恐怕足球比赛不能举行了。",
+        "pinyin": "Tīngshuō míngtiān huì xià dà yǔ, kǒngpà zúqiú bǐsài bù néng jǔxíng le.",
+        "en": "I heard it will rain heavily tomorrow — I'm afraid the match can't be held."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "困难",
+    "pinyin": "kùnnán",
+    "meaning": "n/adj. difficulty; difficult",
+    "usage": [
+      {
+        "zh": "做生意会遇到各种压力和困难。",
+        "pinyin": "Zuò shēngyi huì yùdào gèzhǒng yālì hé kùnnán.",
+        "en": "Doing business means encountering all sorts of pressure and difficulties."
+      }
+    ],
+    "lesson": "Slides_20260603"
+  },
+  {
+    "hanzi": "失望",
+    "pinyin": "shīwàng",
+    "meaning": "adj. disappointed",
+    "usage": [
+      {
+        "zh": "今年放假我又回不了家了，我父母又要失望了。",
+        "pinyin": "Jīnnián fàngjià wǒ yòu huí bu liǎo jiā le, wǒ fùmǔ yòu yào shīwàng le.",
+        "en": "I can't go home for the holidays again this year — my parents will be disappointed again."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "郊区",
+    "pinyin": "jiāoqū",
+    "meaning": "n. suburb, outskirts",
+    "usage": [
+      {
+        "zh": "我计划去郊区住一个月，放松一下。",
+        "pinyin": "Wǒ jìhuà qù jiāoqū zhù yī gè yuè, fàngsōng yīxià.",
+        "en": "I'm planning to stay in the suburbs for a month to relax."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "到底",
+    "pinyin": "dàodǐ",
+    "meaning": "adv. on earth (emphasis in questions); to the end",
+    "usage": [
+      {
+        "zh": "你不是已经买好票了吗？你到底怎么打算的呀？",
+        "pinyin": "Nǐ bùshì yǐjīng mǎi hǎo piào le ma? Nǐ dàodǐ zěnme dǎsuàn de ya?",
+        "en": "Didn't you already buy the ticket? What on earth are you planning to do?"
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "导游",
+    "pinyin": "dǎoyóu",
+    "meaning": "n. tour guide",
+    "usage": [
+      {
+        "zh": "一个朋友来旅游，让我当导游，我实在不好意思拒绝。",
+        "pinyin": "Yī gè péngyou lái lǚyóu, ràng wǒ dāng dǎoyóu, wǒ shízài bù hǎoyìsi jùjué.",
+        "en": "A friend came to travel and asked me to be their tour guide — I really couldn't bring myself to refuse."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "礼貌",
+    "pinyin": "lǐmào",
+    "meaning": "adj/n. polite; politeness",
+    "usage": [
+      {
+        "zh": "用一个既合适又礼貌的方法告诉朋友，他一定会理解的。",
+        "pinyin": "Yòng yī gè jì héshì yòu lǐmào de fāngfǎ gàosù péngyou, tā yīdìng huì lǐjiě de.",
+        "en": "Tell your friend in a way that is both appropriate and polite, and they will surely understand."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "原谅",
+    "pinyin": "yuánliàng",
+    "meaning": "v. to forgive",
+    "usage": [
+      {
+        "zh": "如果你礼貌地拒绝，朋友一定会理解和原谅你的。",
+        "pinyin": "Rúguǒ nǐ lǐmào de jùjué, péngyou yīdìng huì lǐjiě hé yuánliàng nǐ de.",
+        "en": "If you refuse politely, your friend will surely understand and forgive you."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "拒绝",
+    "pinyin": "jùjué",
+    "meaning": "v. to refuse, reject",
+    "usage": [
+      {
+        "zh": "拒绝并不代表不愿意帮忙。",
+        "pinyin": "Jùjué bìng bù dàibiǎo bù yuànyì bāngmáng.",
+        "en": "Refusing doesn't mean you're unwilling to help."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "坚持",
+    "pinyin": "jiānchí",
+    "meaning": "v. to persist, stick with",
+    "usage": [
+      {
+        "zh": "今天我一定坚持到底，保证不再离开。",
+        "pinyin": "Jīntiān wǒ yīdìng jiānchí dàodǐ, bǎozhèng bù zài líkāi.",
+        "en": "Today I will definitely stick it out to the end — I promise not to leave again."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "负责",
+    "pinyin": "fùzé",
+    "meaning": "v. to be responsible for",
+    "usage": [
+      {
+        "zh": "拒绝正好说明你对朋友负责，也是对父母负责的态度。",
+        "pinyin": "Jùjué zhènghǎo shuōmíng nǐ duì péngyou fùzé, yě shì duì fùmǔ fùzé de tàidù.",
+        "en": "Refusing shows that you are being responsible toward your friend, and also toward your parents."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "误会",
+    "pinyin": "wùhuì",
+    "meaning": "v/n. to misunderstand; misunderstanding",
+    "usage": [
+      {
+        "zh": "我担心说「不」的话，会让他误会和伤心。",
+        "pinyin": "Wǒ dānxīn shuō 「bù」 de huà, huì ràng tā wùhuì hé shāngxīn.",
+        "en": "I'm worried that saying 'no' will make him misunderstand and feel hurt."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "既…又…",
+    "pinyin": "jì…yòu…",
+    "meaning": "conj. both… and…",
+    "usage": [
+      {
+        "zh": "用一个既合适又礼貌的方法告诉朋友，他一定会理解的。",
+        "pinyin": "Yòng yī gè jì héshì yòu lǐmào de fāngfǎ gàosù péngyou, tā yīdìng huì lǐjiě de.",
+        "en": "Tell your friend in a way that is both appropriate and polite, and they will surely understand."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "保证",
+    "pinyin": "bǎozhèng",
+    "meaning": "v. to guarantee, assure",
+    "usage": [
+      {
+        "zh": "今天我一定坚持到底，保证不再离开。",
+        "pinyin": "Jīntiān wǒ yīdìng jiānchí dàodǐ, bǎozhèng bù zài líkāi.",
+        "en": "Today I'll definitely see it through — I promise not to leave again."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "打算",
+    "pinyin": "dǎsuàn",
+    "meaning": "v/n. to plan; plan",
+    "usage": [
+      {
+        "zh": "你不是已经买好票了吗？你到底怎么打算的呀？",
+        "pinyin": "Nǐ bùshì yǐjīng mǎi hǎo piào le ma? Nǐ dàodǐ zěnme dǎsuàn de ya?",
+        "en": "Didn't you already buy the ticket? What exactly are you planning?"
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "决定",
+    "pinyin": "juédìng",
+    "meaning": "v/n. to decide; decision",
+    "usage": [
+      {
+        "zh": "到底谁去参加比赛？你们还没决定好吗？",
+        "pinyin": "Dàodǐ shéi qù cānjiā bǐsài? Nǐmen hái méi juédìng hǎo ma?",
+        "en": "Who exactly is going to the competition? Haven't you decided yet?"
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "理解",
+    "pinyin": "lǐjiě",
+    "meaning": "v. to understand, comprehend",
+    "usage": [
+      {
+        "zh": "不同的人对成功有不同的理解。",
+        "pinyin": "Bùtóng de rén duì chénggōng yǒu bùtóng de lǐjiě.",
+        "en": "Different people have different understandings of success."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "外地",
+    "pinyin": "wàidì",
+    "meaning": "n. another place, out of town",
+    "usage": [
+      {
+        "zh": "一个外地的好朋友打电话说要来旅游。",
+        "pinyin": "Yī gè wàidì de hǎo péngyou dǎ diànhuà shuō yào lái lǚyóu.",
+        "en": "A good friend from out of town called to say they're coming to visit."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "其实",
+    "pinyin": "qíshí",
+    "meaning": "adv. actually, in fact",
+    "usage": [
+      {
+        "zh": "其实，拒绝并不代表不愿意帮忙。",
+        "pinyin": "Qíshí, jùjué bìng bù dàibiǎo bù yuànyì bāngmáng.",
+        "en": "Actually, refusing doesn't mean being unwilling to help."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "无法",
+    "pinyin": "wúfǎ",
+    "meaning": "v. to be unable to, have no way to",
+    "usage": [
+      {
+        "zh": "遇到无法完成的任务时，拒绝正好说明你负责。",
+        "pinyin": "Yùdào wúfǎ wánchéng de rènwù shí, jùjué zhènghǎo shuōmíng nǐ fùzé.",
+        "en": "When faced with a task you can't complete, refusing shows you're being responsible."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "任务",
+    "pinyin": "rènwù",
+    "meaning": "n. task, mission",
+    "usage": [
+      {
+        "zh": "遇到解决不了的问题或者无法完成的任务时，可以拒绝。",
+        "pinyin": "Yùdào jiějué bu liǎo de wèntí huòzhě wúfǎ wánchéng de rènwù shí, kěyǐ jùjué.",
+        "en": "When you meet problems you can't solve or tasks you can't complete, you can refuse."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "正好",
+    "pinyin": "zhènghǎo",
+    "meaning": "adv. just right, precisely",
+    "usage": [
+      {
+        "zh": "拒绝正好说明你对朋友负责。",
+        "pinyin": "Jùjué zhènghǎo shuōmíng nǐ duì péngyou fùzé.",
+        "en": "Refusing precisely shows that you're being responsible toward your friend."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "既然",
+    "pinyin": "jìrán",
+    "meaning": "conj. since, given that",
+    "usage": [
+      {
+        "zh": "既然别人找你帮忙，说明他真的很需要你。",
+        "pinyin": "Jìrán biérén zhǎo nǐ bāngmáng, shuōmíng tā zhēn de hěn xūyào nǐ.",
+        "en": "Since someone asked you for help, it means they really need you."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "伤心",
+    "pinyin": "shāngxīn",
+    "meaning": "adj. sad, heartbroken",
+    "usage": [
+      {
+        "zh": "我担心要是说「不」的话，会让他误会和伤心。",
+        "pinyin": "Wǒ dānxīn yàoshi shuō 「bù」 de huà, huì ràng tā wùhuì hé shāngxīn.",
+        "en": "I'm worried that saying 'no' would make him misunderstand and feel hurt."
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "高铁",
+    "pinyin": "gāotiě",
+    "meaning": "n. high-speed rail",
+    "usage": [
+      {
+        "zh": "你不是已经买高铁票了吗？",
+        "pinyin": "Nǐ bùshì yǐjīng mǎi gāotiě piào le ma?",
+        "en": "Didn't you already buy the high-speed rail ticket?"
+      }
+    ],
+    "lesson": "Slides_20260610"
+  },
+  {
+    "hanzi": "挂",
+    "pinyin": "guà",
+    "meaning": "v. to hang, put up",
+    "usage": [
+      {
+        "zh": "他把地图挂在墙上，方便每天查看。",
+        "pinyin": "Tā bǎ dìtú guà zài qiáng shàng, fāngbiàn měitiān cháká.",
+        "en": "He hung the map on the wall so he could check it every day."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "同情",
+    "pinyin": "tóngqíng",
+    "meaning": "v. to sympathise with",
+    "usage": [
+      {
+        "zh": "大家都很同情他的遭遇，希望能帮助他。",
+        "pinyin": "Dàjiā dōu hěn tóngqíng tā de zāoyù, xīwàng néng bāngzhù tā.",
+        "en": "Everyone sympathised with his situation and hoped to help him."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "推",
+    "pinyin": "tuī",
+    "meaning": "v. to put off, postpone",
+    "usage": [
+      {
+        "zh": "不要把什么事情都推到「明天」，一切从现在做起。",
+        "pinyin": "Bùyào bǎ shénme shìqing dōu tuī dào 「míngtiān」, yīqiè cóng xiànzài zuò qǐ.",
+        "en": "Don't put everything off until 'tomorrow' — start doing things now."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "预习",
+    "pinyin": "yùxí",
+    "meaning": "v. to prepare lessons before class",
+    "usage": [
+      {
+        "zh": "学汉语要注意课前预习，也要重视复习。",
+        "pinyin": "Xué Hànyǔ yào zhùyì kè qián yùxí, yě yào zhòngshì fùxí.",
+        "en": "When studying Chinese, pay attention to preparing before class and also to reviewing afterwards."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "马虎",
+    "pinyin": "mǎhu",
+    "meaning": "adj. careless, slipshod",
+    "usage": [
+      {
+        "zh": "做作业不能马虎，要认真检查每一道题。",
+        "pinyin": "Zuò zuòyè bù néng mǎhu, yào rènzhēn jiǎnchá měi yī dào tí.",
+        "en": "You can't be careless with homework — you need to carefully check every question."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "自信",
+    "pinyin": "zìxìn",
+    "meaning": "adj. self-confident",
+    "usage": [
+      {
+        "zh": "她在台上说话非常自信，大家都很佩服她。",
+        "pinyin": "Tā zài tái shàng shuōhuà fēicháng zìxìn, dàjiā dōu hěn pèifú tā.",
+        "en": "She spoke on stage with great confidence and everyone admired her."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "严重",
+    "pinyin": "yánzhòng",
+    "meaning": "adj. serious, severe",
+    "usage": [
+      {
+        "zh": "大量使用塑料袋带来了严重的环境污染问题。",
+        "pinyin": "Dàliàng shǐyòng sùliào dài dài lái le yánzhòng de huánjìng wūrǎn wèntí.",
+        "en": "The heavy use of plastic bags has caused serious environmental pollution problems."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "重视",
+    "pinyin": "zhòngshì",
+    "meaning": "v. to value, attach importance to",
+    "usage": [
+      {
+        "zh": "有些问题看起来很小，但如果不重视，很可能会发展成大麻烦。",
+        "pinyin": "Yǒuxiē wèntí kàn qǐlái hěn xiǎo, dàn rúguǒ bù zhòngshì, hěn kěnéng huì fāzhǎn chéng dà máfan.",
+        "en": "Some problems seem small, but if you don't take them seriously they can easily develop into big trouble."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "尊重",
+    "pinyin": "zūnzhòng",
+    "meaning": "v. to respect",
+    "usage": [
+      {
+        "zh": "中国人请朋友去饭店吃饭，表示对客人的尊重和礼貌。",
+        "pinyin": "Zhōngguó rén qǐng péngyou qù fàndiàn chīfàn, biǎoshì duì kèrén de zūnzhòng hé lǐmào.",
+        "en": "Chinese people invite friends to restaurants as a sign of respect and courtesy toward their guests."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "拿…来说",
+    "pinyin": "ná…lái shuō",
+    "meaning": "phr. take… for example",
+    "usage": [
+      {
+        "zh": "就拿学汉语来说，要注意课前预习，也要重视复习。",
+        "pinyin": "Jiù ná xué Hànyǔ lái shuō, yào zhùyì kè qián yùxí, yě yào zhòngshì fùxí.",
+        "en": "Take learning Chinese as an example — you need to prepare before class and also review afterwards."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "手忙脚乱",
+    "pinyin": "shǒu máng jiǎo luàn",
+    "meaning": "idiom. in a fluster, all over the place",
+    "usage": [
+      {
+        "zh": "没有工作计划很容易让人手忙脚乱，不知道先做什么好。",
+        "pinyin": "Méiyǒu gōngzuò jìhuà hěn róngyì ràng rén shǒu máng jiǎo luàn, bù zhīdào xiān zuò shénme hǎo.",
+        "en": "Without a work plan it's easy to end up in a fluster, not knowing what to do first."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "污染",
+    "pinyin": "wūrǎn",
+    "meaning": "v/n. to pollute; pollution",
+    "usage": [
+      {
+        "zh": "做好垃圾分类可以减少环境污染。",
+        "pinyin": "Zuò hǎo lājī fēnlèi kěyǐ jiǎnshǎo huánjìng wūrǎn.",
+        "en": "Proper waste sorting can reduce environmental pollution."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "塑料袋",
+    "pinyin": "sùliào dài",
+    "meaning": "n. plastic bag",
+    "usage": [
+      {
+        "zh": "塑料袋确实很方便，但是大量使用会带来严重的环境污染。",
+        "pinyin": "Sùliào dài quèshí hěn fāngbiàn, dànshì dàliàng shǐyòng huì dài lái yánzhòng de huánjìng wūrǎn.",
+        "en": "Plastic bags are indeed very convenient, but using large quantities causes serious environmental pollution."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "容易",
+    "pinyin": "róngyì",
+    "meaning": "adj. easy",
+    "usage": [
+      {
+        "zh": "虽然得到别人的原谅很容易，但重新让别人相信你很难。",
+        "pinyin": "Suīrán dédào biérén de yuánliàng hěn róngyì, dàn chóngxīn ràng biérén xiāngxìn nǐ hěn nán.",
+        "en": "Although getting others' forgiveness is easy, making them trust you again is hard."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "重新",
+    "pinyin": "chóngxīn",
+    "meaning": "adv. again, anew",
+    "usage": [
+      {
+        "zh": "重新让别人再相信你，很难。",
+        "pinyin": "Chóngxīn ràng biérén zài xiāngxìn nǐ, hěn nán.",
+        "en": "Making others trust you again is very hard."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "相信",
+    "pinyin": "xiāngxìn",
+    "meaning": "v. to believe, trust",
+    "usage": [
+      {
+        "zh": "重新让别人再相信你，很难。",
+        "pinyin": "Chóngxīn ràng biérén zài xiāngxìn nǐ, hěn nán.",
+        "en": "Making others trust you again is very hard."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "新鲜",
+    "pinyin": "xīnxiān",
+    "meaning": "adj. fresh",
+    "usage": [
+      {
+        "zh": "他们想找一个空气新鲜、环境安静的地方放松一下。",
+        "pinyin": "Tāmen xiǎng zhǎo yī gè kōngqì xīnxiān, huánjìng ānjìng de dìfang fàngsōng yīxià.",
+        "en": "They want to find somewhere with fresh air and a quiet environment to relax."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "放松",
+    "pinyin": "fàngsōng",
+    "meaning": "v. to relax",
+    "usage": [
+      {
+        "zh": "城市里的人喜欢到郊区过周末，好好放松一下。",
+        "pinyin": "Chéngshì lǐ de rén xǐhuan dào jiāoqū guò zhōumò, hǎohāo fàngsōng yīxià.",
+        "en": "City dwellers like spending weekends in the suburbs to relax properly."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "面试",
+    "pinyin": "miànshì",
+    "meaning": "n/v. interview; to interview",
+    "usage": [
+      {
+        "zh": "这次面试很多人满足公司的要求。",
+        "pinyin": "Zhè cì miànshì hěn duō rén mǎnzú gōngsī de yāoqiú.",
+        "en": "Many people at this interview met the company's requirements."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "满足",
+    "pinyin": "mǎnzú",
+    "meaning": "v. to satisfy, meet (a requirement)",
+    "usage": [
+      {
+        "zh": "这次面试很多人满足公司的要求。",
+        "pinyin": "Zhè cì miànshì hěn duō rén mǎnzú gōngsī de yāoqiú.",
+        "en": "Many people at this interview met the company's requirements."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "一切",
+    "pinyin": "yīqiè",
+    "meaning": "pron. everything, all",
+    "usage": [
+      {
+        "zh": "不要把什么事情都推到「明天」，一切从现在做起。",
+        "pinyin": "Bùyào bǎ shénme shìqing dōu tuī dào 「míngtiān」, yīqiè cóng xiànzài zuò qǐ.",
+        "en": "Don't put everything off till 'tomorrow' — start everything from now."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "垃圾",
+    "pinyin": "lājī",
+    "meaning": "n. rubbish, garbage",
+    "usage": [
+      {
+        "zh": "保护环境应该从小事做起，比如按时倒垃圾。",
+        "pinyin": "Bǎohù huánjìng yīnggāi cóng xiǎoshì zuò qǐ, bǐrú ànshí dào lājī.",
+        "en": "Protecting the environment should start with small things, like taking out the rubbish on time."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "垃圾分类",
+    "pinyin": "lājī fēnlèi",
+    "meaning": "n. waste sorting, recycling",
+    "usage": [
+      {
+        "zh": "做好垃圾分类可以减少环境污染。",
+        "pinyin": "Zuò hǎo lājī fēnlèi kěyǐ jiǎnshǎo huánjìng wūrǎn.",
+        "en": "Proper waste sorting can reduce environmental pollution."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "确实",
+    "pinyin": "quèshí",
+    "meaning": "adv. indeed, really",
+    "usage": [
+      {
+        "zh": "塑料袋确实很方便，但是大量使用带来了污染问题。",
+        "pinyin": "Sùliào dài quèshí hěn fāngbiàn, dànshì dàliàng shǐyòng dài lái le wūrǎn wèntí.",
+        "en": "Plastic bags are indeed convenient, but heavy use has brought pollution problems."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "大量",
+    "pinyin": "dàliàng",
+    "meaning": "adj. a large quantity of",
+    "usage": [
+      {
+        "zh": "大量使用塑料袋带来了严重的环境污染问题。",
+        "pinyin": "Dàliàng shǐyòng sùliào dài dài lái le yánzhòng de huánjìng wūrǎn wèntí.",
+        "en": "Using plastic bags in large quantities has caused serious environmental pollution."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "竟然",
+    "pinyin": "jìngrán",
+    "meaning": "adv. unexpectedly, to one's surprise",
+    "usage": [
+      {
+        "zh": "她一直很重视这个机会，最后竟然放弃了。",
+        "pinyin": "Tā yīzhí hěn zhòngshì zhège jīhuì, zuìhòu jìngrán fàngqì le.",
+        "en": "She had always valued this opportunity, yet in the end she unexpectedly gave it up."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "吃惊",
+    "pinyin": "chījīng",
+    "meaning": "v. to be surprised, startled",
+    "usage": [
+      {
+        "zh": "她最后竟然放弃了，这让我们非常吃惊。",
+        "pinyin": "Tā zuìhòu jìngrán fàngqì le, zhè ràng wǒmen fēicháng chījīng.",
+        "en": "In the end she unexpectedly gave up, which surprised us greatly."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "表示",
+    "pinyin": "biǎoshì",
+    "meaning": "v. to express, indicate",
+    "usage": [
+      {
+        "zh": "请客人吃饭，表示对客人的尊重和礼貌。",
+        "pinyin": "Qǐng kèrén chīfàn, biǎoshì duì kèrén de zūnzhòng hé lǐmào.",
+        "en": "Inviting guests to dinner expresses respect and courtesy toward them."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "按照",
+    "pinyin": "ànzhào",
+    "meaning": "prep. according to, in line with",
+    "usage": [
+      {
+        "zh": "我们还是按照原计划出发。",
+        "pinyin": "Wǒmen háishì ànzhào yuán jìhuà chūfā.",
+        "en": "We'll still set off according to the original plan."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "得到",
+    "pinyin": "dédào",
+    "meaning": "v. to get, obtain, receive",
+    "usage": [
+      {
+        "zh": "他帮助有困难的人，所以得到了大家的尊重。",
+        "pinyin": "Tā bāngzhù yǒu kùnnán de rén, suǒyǐ dédào le dàjiā de zūnzhòng.",
+        "en": "He helps people in difficulty, so he has earned everyone's respect."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "重要",
+    "pinyin": "zhòngyào",
+    "meaning": "adj. important",
+    "usage": [
+      {
+        "zh": "如果是很重要的朋友，中国人常常会请他们去饭店吃饭。",
+        "pinyin": "Rúguǒ shì hěn zhòngyào de péngyou, Zhōngguó rén chángcháng huì qǐng tāmen qù fàndiàn chīfàn.",
+        "en": "If they're important friends, Chinese people often invite them out to a restaurant."
+      }
+    ],
+    "lesson": "Slides_20260617"
+  },
+  {
+    "hanzi": "冷静",
+    "pinyin": "lěngjìng",
+    "meaning": "adj. calm, composed",
+    "usage": [
+      {
+        "zh": "当你认为自己很优秀时，千万要冷静，不要骄傲。",
+        "pinyin": "Dāng nǐ rènwéi zìjǐ hěn yōuxiù shí, qiānwàn yào lěngjìng, bùyào jiāo'ào.",
+        "en": "When you think you are excellent, you must stay calm and not become arrogant."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "敢",
+    "pinyin": "gǎn",
+    "meaning": "v. to dare",
+    "usage": [
+      {
+        "zh": "如果你敢诚实地说出自己的缺点，更能得到别人的尊重。",
+        "pinyin": "Rúguǒ nǐ gǎn chéngshí de shuō chū zìjǐ de quēdiǎn, gèng néng dédào biérén de zūnzhòng.",
+        "en": "If you dare to honestly admit your shortcomings, you will earn even more respect from others."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "浪费",
+    "pinyin": "làngfèi",
+    "meaning": "v. to waste",
+    "usage": [
+      {
+        "zh": "这种态度不但会浪费时间，而且什么事情都做不好。",
+        "pinyin": "Zhè zhǒng tàidù bùdàn huì làngfèi shíjiān, érqiě shénme shìqing dōu zuò bu hǎo.",
+        "en": "This attitude not only wastes time, but also means nothing gets done well."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "骄傲",
+    "pinyin": "jiāo'ào",
+    "meaning": "adj. proud, arrogant",
+    "usage": [
+      {
+        "zh": "这个世界很大，「天外有天，人外有人」，所以不要骄傲。",
+        "pinyin": "Zhège shìjiè hěn dà, 「tiān wài yǒu tiān, rén wài yǒu rén」, suǒyǐ bùyào jiāo'ào.",
+        "en": "The world is vast — there is always a sky beyond the sky and a person beyond the person — so don't be arrogant."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "永远",
+    "pinyin": "yǒngyuǎn",
+    "meaning": "adv. forever, always",
+    "usage": [
+      {
+        "zh": "没有人会永远输，也没有人会一直赢。",
+        "pinyin": "Méiyǒu rén huì yǒngyuǎn shū, yě méiyǒu rén huì yīzhí yíng.",
+        "en": "No one loses forever, and no one wins all the time."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "积累",
+    "pinyin": "jīlěi",
+    "meaning": "v. to accumulate, build up",
+    "usage": [
+      {
+        "zh": "我们应该重视平时的积累，多向身边的人学习。",
+        "pinyin": "Wǒmen yīnggāi zhòngshì píngshí de jīlěi, duō xiàng shēnbiān de rén xuéxí.",
+        "en": "We should value everyday accumulation and learn more from the people around us."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "优秀",
+    "pinyin": "yōuxiù",
+    "meaning": "adj. excellent, outstanding",
+    "usage": [
+      {
+        "zh": "当你认为自己在哪方面很优秀时，千万要冷静。",
+        "pinyin": "Dāng nǐ rènwéi zìjǐ zài nǎ fāngmiàn hěn yōuxiù shí, qiānwàn yào lěngjìng.",
+        "en": "When you think you are outstanding in some area, you must stay calm."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "将来",
+    "pinyin": "jiānglái",
+    "meaning": "n. the future",
+    "usage": [
+      {
+        "zh": "有的人经常把「明天」和「将来」挂在嘴上，却什么都不做。",
+        "pinyin": "Yǒu de rén jīngcháng bǎ 「míngtiān」 hé 「jiānglái」 guà zài zuǐ shàng, què shénme dōu bù zuò.",
+        "en": "Some people always have 'tomorrow' and 'the future' on their lips, yet do nothing at all."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "镜子",
+    "pinyin": "jìngzi",
+    "meaning": "n. mirror",
+    "usage": [
+      {
+        "zh": "我们应该把敢说真话的人当成「镜子」，这样才能发现自己的缺点。",
+        "pinyin": "Wǒmen yīnggāi bǎ gǎn shuō zhēnhuà de rén dàng chéng 「jìngzi」, zhèyàng cái néng fāxiàn zìjǐ de quēdiǎn.",
+        "en": "We should treat people who dare to speak the truth as a 'mirror' — only then can we discover our own shortcomings."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "注意",
+    "pinyin": "zhùyì",
+    "meaning": "v. to pay attention to",
+    "usage": [
+      {
+        "zh": "学汉语首先要注意课前预习。",
+        "pinyin": "Xué Hànyǔ shǒuxiān yào zhùyì kè qián yùxí.",
+        "en": "When learning Chinese, first pay attention to preparing before class."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "态度",
+    "pinyin": "tàidu",
+    "meaning": "n. attitude",
+    "usage": [
+      {
+        "zh": "这种态度不但会浪费时间，最后什么事情都做不好。",
+        "pinyin": "Zhè zhǒng tàidu bùdàn huì làngfèi shíjiān, zuìhòu shénme shìqing dōu zuò bu hǎo.",
+        "en": "This attitude not only wastes time, but in the end nothing gets done well."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "其次",
+    "pinyin": "qícì",
+    "meaning": "conj. secondly, next",
+    "usage": [
+      {
+        "zh": "首先要课前预习；其次，上课时要认真听。",
+        "pinyin": "Shǒuxiān yào kè qián yùxí; qícì, shàngkè shí yào rènzhēn tīng.",
+        "en": "First, prepare before class; secondly, listen carefully during class."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "躺",
+    "pinyin": "tǎng",
+    "meaning": "v. to lie down",
+    "usage": [
+      {
+        "zh": "小时候我喜欢躺在床上看书，结果眼睛越来越不好。",
+        "pinyin": "Xiǎoshíhou wǒ xǐhuan tǎng zài chuáng shàng kànshū, jiéguǒ yǎnjing yuèláiyuè bù hǎo.",
+        "en": "As a child I liked reading lying in bed, and as a result my eyesight got worse and worse."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "厉害",
+    "pinyin": "lìhai",
+    "meaning": "adj. impressive, formidable; severe",
+    "usage": [
+      {
+        "zh": "很可能有人在这方面比你更厉害。",
+        "pinyin": "Hěn kěnéng yǒu rén zài zhè fāngmiàn bǐ nǐ gèng lìhai.",
+        "en": "It's quite possible someone is even better than you in this area."
+      }
+    ],
+    "lesson": "Slides_20260708"
+  },
+  {
+    "hanzi": "云",
+    "pinyin": "yún",
+    "meaning": "n. cloud",
+    "usage": [
+      {
+        "zh": "你看天上的云，今天肯定有大雨。",
+        "pinyin": "Nǐ kàn tiān shàng de yún, jīntiān kěndìng yǒu dà yǔ.",
+        "en": "Look at the clouds in the sky — it will definitely rain heavily today."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "照",
+    "pinyin": "zhào",
+    "meaning": "v. to take a photo",
+    "usage": [
+      {
+        "zh": "真可惜，我还想拍香山的照片呢。",
+        "pinyin": "Zhēn kěxī, wǒ hái xiǎng pāi Xiāngshān de zhàopiàn ne.",
+        "en": "What a pity — I still wanted to take photos of Fragrant Hill."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "倒",
+    "pinyin": "dào",
+    "meaning": "adv. yet, actually (indicates contrast)",
+    "usage": [
+      {
+        "zh": "去长城倒是一个好主意，就是太远了。",
+        "pinyin": "Qù Chángchéng dào shì yī gè hǎo zhǔyi, jiùshì tài yuǎn le.",
+        "en": "Going to the Great Wall is actually a good idea — it's just too far."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "气温",
+    "pinyin": "qìwēn",
+    "meaning": "n. air temperature",
+    "usage": [
+      {
+        "zh": "随着气温的降低，香山很多植物的叶子都从绿变黄或者变红。",
+        "pinyin": "Suízhe qìwēn de jiàngdī, Xiāngshān hěn duō zhíwù de yèzi dōu cóng lǜ biàn huáng huòzhě biàn hóng.",
+        "en": "As the temperature drops, the leaves of many plants on Fragrant Hill turn from green to yellow or red."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "植物",
+    "pinyin": "zhíwù",
+    "meaning": "n. plant",
+    "usage": [
+      {
+        "zh": "香山很多植物的叶子秋天会变红，吸引了很多游客参观。",
+        "pinyin": "Xiāngshān hěn duō zhíwù de yèzi qiūtiān huì biàn hóng, xīyǐn le hěn duō yóukè cānguān.",
+        "en": "The leaves of many plants on Fragrant Hill turn red in autumn, attracting many tourists."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "游客",
+    "pinyin": "yóukè",
+    "meaning": "n. tourist, visitor",
+    "usage": [
+      {
+        "zh": "这几天香山特别热闹，吸引了很多游客参观。",
+        "pinyin": "Zhè jǐ tiān Xiāngshān tèbié rènao, xīyǐn le hěn duō yóukè cānguān.",
+        "en": "Fragrant Hill has been especially lively these past few days, attracting many tourists."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "叶子",
+    "pinyin": "yèzi",
+    "meaning": "n. leaf",
+    "usage": [
+      {
+        "zh": "风一吹，草地上就会有一层黄叶子，看来秋天已经到了。",
+        "pinyin": "Fēng yī chuī, cǎodì shàng jiù huì yǒu yī céng huáng yèzi, kànlái qiūtiān yǐjīng dào le.",
+        "en": "When the wind blows, a layer of yellow leaves covers the grass — it seems autumn has already arrived."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "吸引",
+    "pinyin": "xīyǐn",
+    "meaning": "v. to attract",
+    "usage": [
+      {
+        "zh": "红叶吸引了很多游客专门来香山参观。",
+        "pinyin": "Hóngyè xīyǐn le hěn duō yóukè zhuānmén lái Xiāngshān cānguān.",
+        "en": "The red leaves attract many tourists who come specially to visit Fragrant Hill."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "季节",
+    "pinyin": "jìjié",
+    "meaning": "n. season",
+    "usage": [
+      {
+        "zh": "秋天是看红叶最好的季节。",
+        "pinyin": "Qiūtiān shì kàn hóngyè zuì hǎo de jìjié.",
+        "en": "Autumn is the best season to see red leaves."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "装修",
+    "pinyin": "zhuāngxiū",
+    "meaning": "v/n. to renovate; renovation",
+    "usage": [
+      {
+        "zh": "我的房间不大，但是装修倒是很不错。",
+        "pinyin": "Wǒ de fángjiān bù dà, dànshì zhuāngxiū dào shì hěn bùcuò.",
+        "en": "My room isn't big, but the renovation is actually quite nice."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "批评",
+    "pinyin": "pīpíng",
+    "meaning": "v. to criticise",
+    "usage": [
+      {
+        "zh": "爱批评别人或者没有同情心的人是不被欢迎的。",
+        "pinyin": "Ài pīpíng biérén huòzhě méiyǒu tóngqíng xīn de rén shì bù bèi huānyíng de.",
+        "en": "People who like to criticise others or lack sympathy are not welcome."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "即使…也",
+    "pinyin": "jíshǐ…yě",
+    "meaning": "conj. even if…, still…",
+    "usage": [
+      {
+        "zh": "这样的人即使很成功，朋友也很少。",
+        "pinyin": "Zhèyàng de rén jíshǐ hěn chénggōng, péngyou yě hěn shǎo.",
+        "en": "Even if such a person is very successful, they still have few friends."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "意义",
+    "pinyin": "yìyì",
+    "meaning": "n. meaning, significance",
+    "usage": [
+      {
+        "zh": "生活的意义就是：只要你努力去做了，都值得掌声。",
+        "pinyin": "Shēnghuó de yìyì jiùshì: zhǐyào nǐ nǔlì qù zuò le, dōu zhídé zhǎngshēng.",
+        "en": "The meaning of life is this: as long as you tried your best, it deserves applause."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "掌声",
+    "pinyin": "zhǎngshēng",
+    "meaning": "n. applause",
+    "usage": [
+      {
+        "zh": "不管是输是赢，都值得掌声。",
+        "pinyin": "Bùguǎn shì shū shì yíng, dōu zhídé zhǎngshēng.",
+        "en": "Win or lose, it deserves applause."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "考虑",
+    "pinyin": "kǎolǜ",
+    "meaning": "v. to consider, think over",
+    "usage": [
+      {
+        "zh": "我考虑了很久，还是决定离开现在的公司。",
+        "pinyin": "Wǒ kǎolǜ le hěn jiǔ, háishì juédìng líkāi xiànzài de gōngsī.",
+        "en": "I thought about it for a long time and still decided to leave my current company."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "演员",
+    "pinyin": "yǎnyuán",
+    "meaning": "n. actor, performer",
+    "usage": [
+      {
+        "zh": "他想大学毕业后就去当演员。",
+        "pinyin": "Tā xiǎng dàxué bìyè hòu jiù qù dāng yǎnyuán.",
+        "en": "He wants to become an actor after graduating from university."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "层",
+    "pinyin": "céng",
+    "meaning": "m. layer; storey",
+    "usage": [
+      {
+        "zh": "风一吹，草地上就会有一层黄叶子。",
+        "pinyin": "Fēng yī chuī, cǎodì shàng jiù huì yǒu yī céng huáng yèzi.",
+        "en": "When the wind blows, a layer of yellow leaves covers the grass."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "随着",
+    "pinyin": "suízhe",
+    "meaning": "prep. along with, as",
+    "usage": [
+      {
+        "zh": "随着气温的降低，很多植物的叶子都变黄了。",
+        "pinyin": "Suízhe qìwēn de jiàngdī, hěn duō zhíwù de yèzi dōu biàn huáng le.",
+        "en": "As the temperature drops, the leaves of many plants turn yellow."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "降低",
+    "pinyin": "jiàngdī",
+    "meaning": "v. to lower, drop, reduce",
+    "usage": [
+      {
+        "zh": "随着气温的降低，那里的叶子从绿变黄或者变红。",
+        "pinyin": "Suízhe qìwēn de jiàngdī, nàlǐ de yèzi cóng lǜ biàn huáng huòzhě biàn hóng.",
+        "en": "As the temperature drops, the leaves there turn from green to yellow or red."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "专门",
+    "pinyin": "zhuānmén",
+    "meaning": "adv. specially, specifically",
+    "usage": [
+      {
+        "zh": "听说那里也有不少专门看红叶的好地方。",
+        "pinyin": "Tīngshuō nàlǐ yě yǒu bù shǎo zhuānmén kàn hóngyè de hǎo dìfang.",
+        "en": "I hear there are also plenty of good spots there specifically for viewing red leaves."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "约",
+    "pinyin": "yuē",
+    "meaning": "v. to arrange, make an appointment",
+    "usage": [
+      {
+        "zh": "没关系，那我们再约时间。",
+        "pinyin": "Méi guānxi, nà wǒmen zài yuē shíjiān.",
+        "en": "No problem — let's arrange another time then."
+      }
+    ],
+    "lesson": "Slides_20260715"
+  },
+  {
+    "hanzi": "毛",
+    "pinyin": "máo",
+    "meaning": "n. hair, fur",
+    "usage": [
+      {
+        "zh": "这只大黑狗的毛真漂亮。",
+        "pinyin": "Zhè zhī dà hēi gǒu de máo zhēn piàoliang.",
+        "en": "The fur on this big black dog is really beautiful."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "抱",
+    "pinyin": "bào",
+    "meaning": "v. to hold in arms, hug",
+    "usage": [
+      {
+        "zh": "这只狗很聪明，每次见了都想抱抱它。",
+        "pinyin": "Zhè zhī gǒu hěn cōngming, měi cì jiàn le dōu xiǎng bào bào tā.",
+        "en": "This dog is so smart — every time I see it I want to give it a hug."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "干",
+    "pinyin": "gàn",
+    "meaning": "v. to do, work, act",
+    "usage": [
+      {
+        "zh": "你让它干什么，它就像能听懂你的话一样去做。",
+        "pinyin": "Nǐ ràng tā gàn shénme, tā jiù xiàng néng tīng dǒng nǐ de huà yīyàng qù zuò.",
+        "en": "Whatever you ask it to do, it acts as if it can understand your words."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "难受",
+    "pinyin": "nánshòu",
+    "meaning": "adj. sad, uncomfortable",
+    "usage": [
+      {
+        "zh": "在你心里难受的时候，狗会一直陪着你。",
+        "pinyin": "Zài nǐ xīnlǐ nánshòu de shíhou, gǒu huì yīzhí péi zhe nǐ.",
+        "en": "When you're feeling sad, your dog will always stay by your side."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "稍微",
+    "pinyin": "shāowēi",
+    "meaning": "adv. slightly, a little",
+    "usage": [
+      {
+        "zh": "只要稍微花一点儿时间教它，它就能学会很多东西。",
+        "pinyin": "Zhǐyào shāowēi huā yīdiǎnr shíjiān jiāo tā, tā jiù néng xuéhuì hěn duō dōngxi.",
+        "en": "As long as you spend just a little time teaching it, it can learn many things."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "耐心",
+    "pinyin": "nàixīn",
+    "meaning": "adj/n. patient; patience",
+    "usage": [
+      {
+        "zh": "应该耐心地一遍一遍教它，让它慢慢熟悉。",
+        "pinyin": "Yīnggāi nàixīn de yī biàn yī biàn jiāo tā, ràng tā màn màn shúxī.",
+        "en": "You should patiently teach it again and again, letting it gradually get familiar."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "熟悉",
+    "pinyin": "shúxī",
+    "meaning": "v. to be familiar with",
+    "usage": [
+      {
+        "zh": "耐心地教它，让它熟悉，然后它就会按照你的要求去做了。",
+        "pinyin": "Nàixīn de jiāo tā, ràng tā shúxī, ránhòu tā jiù huì ànzhào nǐ de yāoqiú qù zuò le.",
+        "en": "Teach it patiently until it's familiar, and then it will follow your instructions."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "凉快",
+    "pinyin": "liángkuai",
+    "meaning": "adj. cool, pleasantly cool",
+    "usage": [
+      {
+        "zh": "下了雨，凉快多了，前几天实在是太热了。",
+        "pinyin": "Xià le yǔ, liángkuai duō le, qián jǐ tiān shízài shì tài rè le.",
+        "en": "After the rain it's much cooler — the past few days were really too hot."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "广播",
+    "pinyin": "guǎngbō",
+    "meaning": "n. broadcast, radio",
+    "usage": [
+      {
+        "zh": "刚才我听广播说明天可能会下大雨，足球比赛恐怕要推迟了。",
+        "pinyin": "Gāngcái wǒ tīng guǎngbō shuō míngtiān kěnéng huì xià dà yǔ, zúqiú bǐsài kǒngpà yào tuīchí le.",
+        "en": "I just heard on the radio that it might rain heavily tomorrow — the football match will probably be postponed."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "养",
+    "pinyin": "yǎng",
+    "meaning": "v. to raise (an animal), keep",
+    "usage": [
+      {
+        "zh": "听你这么一说，我现在也想养一只狗了。",
+        "pinyin": "Tīng nǐ zhème yī shuō, wǒ xiànzài yě xiǎng yǎng yī zhī gǒu le.",
+        "en": "Hearing you say that, now I want to get a dog too."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "陪",
+    "pinyin": "péi",
+    "meaning": "v. to accompany, keep company",
+    "usage": [
+      {
+        "zh": "在你心里难受的时候，它会一直陪着你。",
+        "pinyin": "Zài nǐ xīnlǐ nánshòu de shíhou, tā huì yīzhí péi zhe nǐ.",
+        "en": "When you're feeling down, it will always keep you company."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "实在",
+    "pinyin": "shízài",
+    "meaning": "adv. really, truly",
+    "usage": [
+      {
+        "zh": "一个人实在干不完这么多工作。",
+        "pinyin": "Yī gè rén shízài gàn bu wán zhème duō gōngzuò.",
+        "en": "One person really can't finish this much work."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "终于",
+    "pinyin": "zhōngyú",
+    "meaning": "adv. finally, at last",
+    "usage": [
+      {
+        "zh": "前两天热得睡不着，今天终于能睡个好觉了。",
+        "pinyin": "Qián liǎng tiān rè de shuì bu zháo, jīntiān zhōngyú néng shuì gè hǎo jiào le.",
+        "en": "The last couple of days were too hot to sleep — today I can finally get a good night's sleep."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "舞会",
+    "pinyin": "wǔhuì",
+    "meaning": "n. dance, ball",
+    "usage": [
+      {
+        "zh": "你经常参加学校举行的舞会吗？",
+        "pinyin": "Nǐ jīngcháng cānjiā xuéxiào jǔxíng de wǔhuì ma?",
+        "en": "Do you often go to the dances the school holds?"
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "推迟",
+    "pinyin": "tuīchí",
+    "meaning": "v. to postpone, put off",
+    "usage": [
+      {
+        "zh": "明天可能会下大雨，足球比赛恐怕要推迟了。",
+        "pinyin": "Míngtiān kěnéng huì xià dà yǔ, zúqiú bǐsài kǒngpà yào tuīchí le.",
+        "en": "It might rain heavily tomorrow — the football match will probably be postponed."
+      }
+    ],
+    "lesson": "Slides_20260805"
+  },
+  {
+    "hanzi": "趟",
+    "pinyin": "tàng",
+    "meaning": "m. (measure word for round trips)",
+    "usage": [
+      {
+        "zh": "上个月我去了趟北京动物园，那里约有500多种动物。",
+        "pinyin": "Shàng gè yuè wǒ qù le tàng Běijīng dòngwùyuán, nàlǐ yuē yǒu wǔbǎi duō zhǒng dòngwù.",
+        "en": "Last month I made a trip to Beijing Zoo, which has over 500 kinds of animals."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "放暑假",
+    "pinyin": "fàng shǔjià",
+    "meaning": "v. to be on summer vacation",
+    "usage": [
+      {
+        "zh": "马上就要放暑假了，你有什么安排吗？",
+        "pinyin": "Mǎshàng jiù yào fàng shǔjià le, nǐ yǒu shénme ānpái ma?",
+        "en": "Summer vacation is starting soon — do you have any plans?"
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "老虎",
+    "pinyin": "lǎohǔ",
+    "meaning": "n. tiger",
+    "usage": [
+      {
+        "zh": "我看了马、熊猫、老虎等动物。",
+        "pinyin": "Wǒ kàn le mǎ, xióngmāo, lǎohǔ děng dòngwù.",
+        "en": "I saw horses, pandas, tigers and other animals."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "入口",
+    "pinyin": "rùkǒu",
+    "meaning": "n. entrance",
+    "usage": [
+      {
+        "zh": "入口排队的人很多，动物园里非常热闹。",
+        "pinyin": "Rùkǒu páiduì de rén hěn duō, dòngwùyuán lǐ fēicháng rènao.",
+        "en": "There were many people queuing at the entrance, and the zoo was very lively."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "排队",
+    "pinyin": "páiduì",
+    "meaning": "v. to queue, line up",
+    "usage": [
+      {
+        "zh": "入口排队的人很多。",
+        "pinyin": "Rùkǒu páiduì de rén hěn duō.",
+        "en": "There were a lot of people queuing at the entrance."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "活泼",
+    "pinyin": "huópō",
+    "meaning": "adj. lively, vivacious",
+    "usage": [
+      {
+        "zh": "熊猫们也变得特别活泼，我还给它们照了很多照片。",
+        "pinyin": "Xióngmāo men yě biàn de tèbié huópō, wǒ hái gěi tāmen zhào le hěn duō zhàopiàn.",
+        "en": "The pandas also became especially lively, and I took lots of photos of them."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "亚洲",
+    "pinyin": "Yàzhōu",
+    "meaning": "n. Asia",
+    "usage": [
+      {
+        "zh": "听导游说北京动物园是亚洲最大的动物园之一。",
+        "pinyin": "Tīng dǎoyóu shuō Běijīng dòngwùyuán shì Yàzhōu zuì dà de dòngwùyuán zhīyī.",
+        "en": "The tour guide said Beijing Zoo is one of the largest zoos in Asia."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "六一儿童节",
+    "pinyin": "Liùyī Értóng Jié",
+    "meaning": "n. International Children's Day (June 1)",
+    "usage": [
+      {
+        "zh": "我去的那天正好是六一儿童节，很多父母带着孩子去动物园。",
+        "pinyin": "Wǒ qù de nà tiān zhènghǎo shì Liùyī Értóng Jié, hěn duō fùmǔ dài zhe háizi qù dòngwùyuán.",
+        "en": "The day I went happened to be Children's Day, and many parents took their kids to the zoo."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "出差",
+    "pinyin": "chūchāi",
+    "meaning": "v. to go on a business trip",
+    "usage": [
+      {
+        "zh": "我要出趟差，你能帮我照顾一下我的小狗吗？",
+        "pinyin": "Wǒ yào chū tàng chāi, nǐ néng bāng wǒ zhàogù yīxià wǒ de xiǎo gǒu ma?",
+        "en": "I have to go on a business trip — could you look after my dog for me?"
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "照顾",
+    "pinyin": "zhàogù",
+    "meaning": "v. to look after, take care of",
+    "usage": [
+      {
+        "zh": "你能帮我照顾一下我的小狗吗？",
+        "pinyin": "Nǐ néng bāng wǒ zhàogù yīxià wǒ de xiǎo gǒu ma?",
+        "en": "Could you help me look after my dog?"
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "研究生",
+    "pinyin": "yánjiūshēng",
+    "meaning": "n. postgraduate student",
+    "usage": [
+      {
+        "zh": "我打算先回一趟家，然后回学校准备研究生考试。",
+        "pinyin": "Wǒ dǎsuàn xiān huí yī tàng jiā, ránhòu huí xuéxiào zhǔnbèi yánjiūshēng kǎoshì.",
+        "en": "I plan to go home for a trip first, then return to school to prepare for the postgraduate exam."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "顺便",
+    "pinyin": "shùnbiàn",
+    "meaning": "adv. in passing, on the way",
+    "usage": [
+      {
+        "zh": "回来的路上我顺便去了趟银行。",
+        "pinyin": "Huílái de lù shàng wǒ shùnbiàn qù le tàng yínháng.",
+        "en": "On the way back I stopped by the bank."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "出租车",
+    "pinyin": "chūzūchē",
+    "meaning": "n. taxi",
+    "usage": [
+      {
+        "zh": "他没赶上最后一趟公共汽车，只好坐出租车回家了。",
+        "pinyin": "Tā méi gǎnshàng zuìhòu yī tàng gōnggòng qìchē, zhǐhǎo zuò chūzūchē huí jiā le.",
+        "en": "He missed the last bus and had to take a taxi home."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "熊猫",
+    "pinyin": "xióngmāo",
+    "meaning": "n. panda",
+    "usage": [
+      {
+        "zh": "我特别喜欢熊猫，可惜它们当时都在睡觉。",
+        "pinyin": "Wǒ tèbié xǐhuan xióngmāo, kěxī tāmen dāngshí dōu zài shuìjiào.",
+        "en": "I especially like pandas, but unfortunately they were all sleeping at the time."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "数量",
+    "pinyin": "shùliàng",
+    "meaning": "n. quantity, number",
+    "usage": [
+      {
+        "zh": "不过，他们数量不多，现在全世界一共只有一千多只。",
+        "pinyin": "Bùguò, tāmen shùliàng bù duō, xiànzài quán shìjiè yīgòng zhǐ yǒu yīqiān duō zhī.",
+        "en": "However, their numbers are small — there are only just over a thousand in the whole world."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "友好",
+    "pinyin": "yǒuhǎo",
+    "meaning": "adj. friendly",
+    "usage": [
+      {
+        "zh": "为了表示友好，中国把大熊猫作为礼物送给一些其他的国家。",
+        "pinyin": "Wèile biǎoshì yǒuhǎo, Zhōngguó bǎ dà xióngmāo zuòwéi lǐwù sòng gěi yīxiē qítā de guójiā.",
+        "en": "To show friendship, China gave giant pandas as gifts to some other countries."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "本国",
+    "pinyin": "běnguó",
+    "meaning": "n. one's own country",
+    "usage": [
+      {
+        "zh": "现在很多国家的人在本国都能看到大熊猫了。",
+        "pinyin": "Xiànzài hěn duō guójiā de rén zài běnguó dōu néng kàndào dà xióngmāo le.",
+        "en": "Now people in many countries can see giant pandas in their own country."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "作为",
+    "pinyin": "zuòwéi",
+    "meaning": "prep. as, in the capacity of",
+    "usage": [
+      {
+        "zh": "中国把大熊猫作为礼物送给一些其他的国家。",
+        "pinyin": "Zhōngguó bǎ dà xióngmāo zuòwéi lǐwù sòng gěi yīxiē qítā de guójiā.",
+        "en": "China gave giant pandas as gifts to some other countries."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "之一",
+    "pinyin": "zhīyī",
+    "meaning": "phr. one of",
+    "usage": [
+      {
+        "zh": "北京动物园是亚洲最大的动物园之一。",
+        "pinyin": "Běijīng dòngwùyuán shì Yàzhōu zuì dà de dòngwùyuán zhīyī.",
+        "en": "Beijing Zoo is one of the largest zoos in Asia."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "可爱",
+    "pinyin": "kě'ài",
+    "meaning": "adj. cute, lovable",
+    "usage": [
+      {
+        "zh": "大熊猫身体胖胖的，太可爱了。",
+        "pinyin": "Dà xióngmāo shēntǐ pàng pàng de, tài kě'ài le.",
+        "en": "Giant pandas have such chubby bodies — they're so cute."
+      }
+    ],
+    "lesson": "Slides_20260812"
+  },
+  {
+    "hanzi": "竞争",
+    "pinyin": "jìngzhēng",
+    "meaning": "v. to compete",
+    "usage": [
+      {
+        "zh": "不仅社会上的人与人之间有竞争，森林里的植物之间也有竞争。",
+        "pinyin": "Bùjǐn shèhuì shàng de rén yǔ rén zhījiān yǒu jìngzhēng, sēnlín lǐ de zhíwù zhījiān yě yǒu jìngzhēng.",
+        "en": "Not only do people in society compete with each other, plants in the forest compete too."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "森林",
+    "pinyin": "sēnlín",
+    "meaning": "n. forest",
+    "usage": [
+      {
+        "zh": "森林里的各种植物之间也有竞争，这一点儿也不奇怪。",
+        "pinyin": "Sēnlín lǐ de gèzhǒng zhíwù zhījiān yě yǒu jìngzhēng, zhè yīdiǎnr yě bù qíguài.",
+        "en": "The various plants in the forest also compete with each other, which isn't strange at all."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "剩",
+    "pinyin": "shèng",
+    "meaning": "v. to be left over, remain",
+    "usage": [
+      {
+        "zh": "这本小说就剩十几页了，我想看看最后到底怎么样了。",
+        "pinyin": "Zhè běn xiǎoshuō jiù shèng shí jǐ yè le, wǒ xiǎng kànkan zuìhòu dàodǐ zěnmeyàng le.",
+        "en": "This novel has only a dozen or so pages left — I want to see how it ends."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "暖和",
+    "pinyin": "nuǎnhuo",
+    "meaning": "adj. warm",
+    "usage": [
+      {
+        "zh": "在暖和、水分比较多的地方，叶子经常长得又大又厚。",
+        "pinyin": "Zài nuǎnhuo, shuǐfèn bǐjiào duō de dìfang, yèzi jīngcháng zhǎng de yòu dà yòu hòu.",
+        "en": "In warm places with more moisture, leaves often grow large and thick."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "为了…而…",
+    "pinyin": "wèile…ér…",
+    "meaning": "conj. in order to…, for the sake of…",
+    "usage": [
+      {
+        "zh": "植物会为了阳光、空气和水而竞争。",
+        "pinyin": "Zhíwù huì wèile yángguāng, kōngqì hé shuǐ ér jìngzhēng.",
+        "en": "Plants compete for sunlight, air and water."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "阳光",
+    "pinyin": "yángguāng",
+    "meaning": "n. sunlight",
+    "usage": [
+      {
+        "zh": "一些高大的植物往往能获得更多的阳光、空气和水。",
+        "pinyin": "Yīxiē gāodà de zhíwù wǎngwǎng néng huòdé gèng duō de yángguāng, kōngqì hé shuǐ.",
+        "en": "Some tall plants often obtain more sunlight, air and water."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "空气",
+    "pinyin": "kōngqì",
+    "meaning": "n. air",
+    "usage": [
+      {
+        "zh": "他们想找一个空气新鲜、环境安静的地方放松一下。",
+        "pinyin": "Tāmen xiǎng zhǎo yī gè kōngqì xīnxiān, huánjìng ānjìng de dìfang fàngsōng yīxià.",
+        "en": "They want to find somewhere with fresh air and a quiet environment to relax."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "吵",
+    "pinyin": "chǎo",
+    "meaning": "v. to quarrel; adj. noisy",
+    "usage": [
+      {
+        "zh": "北风与南风为了谁更有能力而吵了起来。",
+        "pinyin": "Běifēng yǔ nánfēng wèile shéi gèng yǒu nénglì ér chǎo le qǐlái.",
+        "en": "The north wind and the south wind started quarrelling over who was more capable."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "忽视",
+    "pinyin": "hūshì",
+    "meaning": "v. to neglect, overlook",
+    "usage": [
+      {
+        "zh": "不要为了工作而忽视了父母。",
+        "pinyin": "Bùyào wèile gōngzuò ér hūshì le fùmǔ.",
+        "en": "Don't neglect your parents for the sake of work."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "来不及",
+    "pinyin": "láibují",
+    "meaning": "v. to be too late, not have time",
+    "usage": [
+      {
+        "zh": "不要等到来不及的时候才后悔。",
+        "pinyin": "Bùyào děng dào láibují de shíhou cái hòuhuǐ.",
+        "en": "Don't wait until it's too late to feel regret."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "后悔",
+    "pinyin": "hòuhuǐ",
+    "meaning": "v. to regret",
+    "usage": [
+      {
+        "zh": "找时间陪陪他们，不要等到来不及的时候才后悔。",
+        "pinyin": "Zhǎo shíjiān péi péi tāmen, bùyào děng dào láibují de shíhou cái hòuhuǐ.",
+        "en": "Make time to keep them company — don't wait until it's too late to regret it."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "减肥",
+    "pinyin": "jiǎnféi",
+    "meaning": "v. to lose weight",
+    "usage": [
+      {
+        "zh": "胖一点儿没关系，千万不要为了减肥而不吃饭。",
+        "pinyin": "Pàng yīdiǎnr méi guānxi, qiānwàn bùyào wèile jiǎnféi ér bù chīfàn.",
+        "en": "Being a bit heavy is fine — whatever you do, don't skip meals to lose weight."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "往往",
+    "pinyin": "wǎngwǎng",
+    "meaning": "adv. often, more often than not",
+    "usage": [
+      {
+        "zh": "一些高大的植物往往能获得更多的阳光、空气和水。",
+        "pinyin": "Yīxiē gāodà de zhíwù wǎngwǎng néng huòdé gèng duō de yángguāng, kōngqì hé shuǐ.",
+        "en": "Tall plants can often obtain more sunlight, air and water."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "高大",
+    "pinyin": "gāodà",
+    "meaning": "adj. tall and big",
+    "usage": [
+      {
+        "zh": "矮的植物只能长在这些高大植物的下面。",
+        "pinyin": "Ǎi de zhíwù zhǐ néng zhǎng zài zhèxiē gāodà zhíwù de xiàmiàn.",
+        "en": "Short plants can only grow beneath these tall ones."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "矮",
+    "pinyin": "ǎi",
+    "meaning": "adj. short (in height)",
+    "usage": [
+      {
+        "zh": "剩下的一些比较矮的植物就只能长在高大植物的下面。",
+        "pinyin": "Shèngxià de yīxiē bǐjiào ǎi de zhíwù jiù zhǐ néng zhǎng zài gāodà zhíwù de xiàmiàn.",
+        "en": "The remaining shorter plants can only grow beneath the tall ones."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "气候",
+    "pinyin": "qìhòu",
+    "meaning": "n. climate",
+    "usage": [
+      {
+        "zh": "由于气候条件不同，世界各地植物叶子的样子也很不相同。",
+        "pinyin": "Yóuyú qìhòu tiáojiàn bùtóng, shìjiè gèdì zhíwù yèzi de yàngzi yě hěn bù xiāngtóng.",
+        "en": "Because climate conditions differ, the shapes of plant leaves vary greatly around the world."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "条件",
+    "pinyin": "tiáojiàn",
+    "meaning": "n. condition",
+    "usage": [
+      {
+        "zh": "由于气候条件不同，各地植物叶子的样子也很不相同。",
+        "pinyin": "Yóuyú qìhòu tiáojiàn bùtóng, gèdì zhíwù yèzi de yàngzi yě hěn bù xiāngtóng.",
+        "en": "Because climate conditions differ, leaf shapes vary from place to place."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "水分",
+    "pinyin": "shuǐfèn",
+    "meaning": "n. moisture, water content",
+    "usage": [
+      {
+        "zh": "在暖和、水分比较多的地方，叶子经常长得又大又厚。",
+        "pinyin": "Zài nuǎnhuo, shuǐfèn bǐjiào duō de dìfang, yèzi jīngcháng zhǎng de yòu dà yòu hòu.",
+        "en": "In warm places with plenty of moisture, leaves often grow big and thick."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "细",
+    "pinyin": "xì",
+    "meaning": "adj. thin, slender, fine",
+    "usage": [
+      {
+        "zh": "在阳光特别厉害、水分少的地方，叶子会长得又细又长。",
+        "pinyin": "Zài yángguāng tèbié lìhai, shuǐfèn shǎo de dìfang, yèzi huì zhǎng de yòu xì yòu cháng.",
+        "en": "Where the sun is very strong and moisture is scarce, leaves grow thin and long."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "各地",
+    "pinyin": "gèdì",
+    "meaning": "n. various places, everywhere",
+    "usage": [
+      {
+        "zh": "世界各地植物叶子的样子也很不相同。",
+        "pinyin": "Shìjiè gèdì zhíwù yèzi de yàngzi yě hěn bù xiāngtóng.",
+        "en": "The shapes of plant leaves differ greatly across the world."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "打折",
+    "pinyin": "dǎzhé",
+    "meaning": "v. to give a discount",
+    "usage": [
+      {
+        "zh": "我们年底有活动，正在打折，比平时便宜一千块。",
+        "pinyin": "Wǒmen niándǐ yǒu huódòng, zhèngzài dǎzhé, bǐ píngshí piányi yīqiān kuài.",
+        "en": "We have a year-end promotion with discounts — it's a thousand yuan cheaper than usual."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "提醒",
+    "pinyin": "tíxǐng",
+    "meaning": "v. to remind",
+    "usage": [
+      {
+        "zh": "它就会反光，这样就能提醒司机前方有人。",
+        "pinyin": "Tā jiù huì fǎnguāng, zhèyàng jiù néng tíxǐng sījī qiánfāng yǒu rén.",
+        "en": "It reflects light, which reminds drivers that someone is up ahead."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "司机",
+    "pinyin": "sījī",
+    "meaning": "n. driver",
+    "usage": [
+      {
+        "zh": "后面汽车的灯光照到它时，就能提醒司机前方有人。",
+        "pinyin": "Hòumiàn qìchē de dēngguāng zhào dào tā shí, jiù néng tíxǐng sījī qiánfāng yǒu rén.",
+        "en": "When the headlights of the car behind shine on it, it alerts the driver that someone is ahead."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  },
+  {
+    "hanzi": "年底",
+    "pinyin": "niándǐ",
+    "meaning": "n. end of the year",
+    "usage": [
+      {
+        "zh": "我们年底有活动，正在打折，比平时便宜一千块。",
+        "pinyin": "Wǒmen niándǐ yǒu huódòng, zhèngzài dǎzhé, bǐ píngshí piányi yīqiān kuài.",
+        "en": "We have a year-end promotion with discounts — a thousand yuan cheaper than usual."
+      }
+    ],
+    "lesson": "Slides_20260819"
+  }
+];
+
+// ── Helpers ──────────────────────────────────────────
+
+function parseLessonDate(lessonKey) {
+  // e.g. "Slides_20260408" → Date
+  const match = lessonKey.match(/(\d{4})(\d{2})(\d{2})/);
+  if (!match) return null;
+  return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+}
+
+function formatLessonDate(lessonKey) {
+  const d = parseLessonDate(lessonKey);
+  if (!d) return lessonKey;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function uniqueLessons() {
+  const seen = new Set();
+  const out  = [];
+  for (const w of ALL_VOCAB) {
+    if (!seen.has(w.lesson)) { seen.add(w.lesson); out.push(w.lesson); }
+  }
+  // Sort chronologically
+  out.sort((a, b) => {
+    const da = parseLessonDate(a), db = parseLessonDate(b);
+    return (da || 0) - (db || 0);
+  });
+  return out;
+}
+
+// ── State ────────────────────────────────────────────
+
+let activeLesson = 'all';
+let deck         = [];
+let currentIndex = 0;
+let revealed     = false;
+
+// ── Lesson bar ───────────────────────────────────────
+
+function buildLessonBar() {
+  const bar     = document.getElementById('lesson-bar');
+  const lessons = uniqueLessons();
+
+  bar.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.className   = 'lesson-pill active';
+  allBtn.textContent = 'All lessons';
+  allBtn.dataset.key = 'all';
+  allBtn.onclick = () => selectLesson('all');
+  bar.appendChild(allBtn);
+
+  for (const key of lessons) {
+    const btn = document.createElement('button');
+    btn.className   = 'lesson-pill';
+    btn.textContent = formatLessonDate(key);
+    btn.dataset.key = key;
+    btn.onclick = () => selectLesson(key);
+    bar.appendChild(btn);
+  }
+}
+
+function selectLesson(key) {
+  activeLesson = key;
+
+  // Update pill styles
+  document.querySelectorAll('.lesson-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.key === key);
+  });
+
+  // Filter deck
+  deck = key === 'all'
+    ? [...ALL_VOCAB]
+    : ALL_VOCAB.filter(w => w.lesson === key);
+
+  currentIndex = 0;
+  renderCard();
+}
+
+// ── Card rendering ───────────────────────────────────
+
+function renderCard() {
+  if (deck.length === 0) return;
+  const word = deck[currentIndex];
+
+  document.getElementById('hanzi').textContent  = word.hanzi;
+  document.getElementById('pinyin').textContent  = word.pinyin;
+  document.getElementById('meaning').textContent = word.meaning;
+  document.getElementById('counter').textContent = `${currentIndex + 1} / ${deck.length}`;
+
+  const usageEl  = document.getElementById('usage-section');
+  const dividerEl = document.getElementById('divider');
+
+  if (word.usage && word.usage.length > 0) {
+    usageEl.innerHTML = word.usage.map(u =>
+      `<div class="usage-item" onclick="this.classList.toggle('pinyin-visible')">
+        <div class="usage-zh">${u.zh}</div>
+        ${u.pinyin ? `<div class="usage-pinyin">${u.pinyin}</div><div class="usage-pinyin-hint">hover for pinyin</div>` : ''}
+        <div class="usage-en">${u.en}</div>
+       </div>`
+    ).join('');
+    dividerEl.style.display = 'block';
+  } else {
+    usageEl.innerHTML = '';
+    dividerEl.style.display = 'none';
+  }
+
+  // Progress bar
+  document.getElementById('progress-fill').style.width =
+    ((currentIndex + 1) / deck.length * 100) + '%';
+
+  // Reset to front
+  setRevealed(false);
+}
+
+function setRevealed(val) {
+  revealed = val;
+  const card = document.getElementById('card');
+  card.classList.toggle('revealed', revealed);
+  document.getElementById('btn-reveal').textContent = revealed ? 'Hide' : 'Reveal';
+}
+
+function toggleReveal() { setRevealed(!revealed); }
+
+function nextCard() {
+  currentIndex = (currentIndex + 1) % deck.length;
+  renderCard();
+}
+
+function prevCard() {
+  currentIndex = (currentIndex - 1 + deck.length) % deck.length;
+  renderCard();
+}
+
+function shuffleCards() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  currentIndex = 0;
+  renderCard();
+}
+
+// ── Keyboard ─────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') {
+    e.preventDefault();
+    if (revealed) nextCard(); else setRevealed(true);
+  }
+  if (e.key === 'o' || e.key === 'O') toggleReveal();
+  if (e.key === 's' || e.key === 'S') shuffleCards();
+  if (e.key === 'ArrowRight') nextCard();
+  if (e.key === 'ArrowLeft') { if (revealed) setRevealed(false); else prevCard(); }
+});
+
+// ── Init ─────────────────────────────────────────────
+
+buildLessonBar();
+selectLesson('all');
+</script>
+</body>
+</html>
