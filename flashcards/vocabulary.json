@@ -138,6 +138,11 @@
         "zh": "各位乘客，大家好，感谢大家乘坐此次航班。",
         "pinyin": "Gè wèi chéng kè, dà jiā hǎo, gǎn xiè dà jiā chéng zuò cǐ cì háng bān.",
         "en": "Dear passengers, thank you for flying with us on this flight."
+      },
+      {
+        "zh": "乘客，您好！我们很抱歉地通知您，因为天气的原因，您乘坐的CA1864航班推迟起飞。",
+        "pinyin": "Chéngkè, nín hǎo! Wǒmen hěn bàoqiàn de tōngzhī nín, yīnwèi tiānqì de yuányīn, nín chéngzuò de CA1864 hángbān tuīchí qǐfēi.",
+        "en": "Hello passenger! We regret to inform you that due to weather conditions, your CA1864 flight has been delayed."
       }
     ],
     "lesson": "Slides_20260408"
@@ -1430,6 +1435,11 @@
         "zh": "我梦到自己在桥上走，突然开过来一辆车。",
         "pinyin": "Wǒ mèng dào zìjǐ zài qiáo shàng zǒu, tūrán kāi guòlái yī liàng chē.",
         "en": "I dreamed I was walking on a bridge when suddenly a car came speeding toward me."
+      },
+      {
+        "zh": "刚才太危险了，那辆车突然加速，可能是新手，刚学会开车。",
+        "pinyin": "Gāngcái tài wēixiǎn le, nà liàng chē tūrán jiāsù, kěnéng shì xīnshǒu, gāng xuéhuì kāichē.",
+        "en": "That was so dangerous just now — the car suddenly sped up; maybe it's a new driver."
       }
     ],
     "lesson": "Slides_20260429"
@@ -1807,6 +1817,11 @@
         "zh": "去美国需要提前申请签证。",
         "pinyin": "Qù Měiguó xūyào tíqián shēnqǐng qiānzhèng.",
         "en": "You need to apply for a visa in advance to go to the US."
+      },
+      {
+        "zh": "是的，我的签证还没有办好，可能10月底才能走。",
+        "pinyin": "Shì de, wǒ de qiānzhèng hái méiyǒu bàn hǎo, kěnéng shí yuè dǐ cái néng zǒu.",
+        "en": "Yes, my visa isn't ready yet — I probably can't leave until the end of October."
       }
     ],
     "lesson": "Slides_20260527"
@@ -2483,6 +2498,11 @@
         "zh": "既然别人找你帮忙，说明他真的很需要你。",
         "pinyin": "Jìrán biérén zhǎo nǐ bāngmáng, shuōmíng tā zhēn de hěn xūyào nǐ.",
         "en": "Since someone asked you for help, it means they really need you."
+      },
+      {
+        "zh": "既然不能改变，那就把过去的事情变成一种回忆，然后勇敢地向前看。",
+        "pinyin": "Jìrán bù néng gǎibiàn, nà jiù bǎ guòqù de shìqing biàn chéng yí zhǒng huíyì, ránhòu yǒnggǎn de xiàng qián kàn.",
+        "en": "Since you can't change the past, turn it into a memory and bravely look forward."
       }
     ],
     "lesson": "Slides_20260610"
@@ -2847,6 +2867,11 @@
         "zh": "她一直很重视这个机会，最后竟然放弃了。",
         "pinyin": "Tā yīzhí hěn zhòngshì zhège jīhuì, zuìhòu jìngrán fàngqì le.",
         "en": "She had always valued this opportunity, yet in the end she unexpectedly gave it up."
+      },
+      {
+        "zh": "真没想到，四年的大学生活竟然这么快就结束了。",
+        "pinyin": "Zhēn méi xiǎngdào, sì nián de dàxué shēnghuó jìngrán zhème kuài jiù jiéshù le.",
+        "en": "I never imagined four years of university life would end so quickly."
       }
     ],
     "lesson": "Slides_20260617"
@@ -3562,6 +3587,11 @@
         "zh": "明天可能会下大雨，足球比赛恐怕要推迟了。",
         "pinyin": "Míngtiān kěnéng huì xià dà yǔ, zúqiú bǐsài kǒngpà yào tuīchí le.",
         "en": "It might rain heavily tomorrow — the football match will probably be postponed."
+      },
+      {
+        "zh": "航班本来是十点的，后来机场通知推迟了一个小时。",
+        "pinyin": "Hángbān běnlái shì shí diǎn de, hòulái jīchǎng tōngzhī tuīchí le yí gè xiǎoshí.",
+        "en": "The flight was originally at ten o'clock, but the airport later announced a one-hour delay."
       }
     ],
     "lesson": "Slides_20260805"
@@ -4222,6 +4252,11 @@
         "zh": "人比动物聪明，但动物仍然有很多值得我们学习的地方。",
         "pinyin": "Rén bǐ dòngwù cōngming, dàn dòngwù réngrán yǒu hěn duō zhídé wǒmen xuéxí de dìfang.",
         "en": "People are cleverer than animals, but animals still have plenty worth learning from."
+      },
+      {
+        "zh": "只要你不放弃，就仍然有希望。",
+        "pinyin": "Zhǐyào nǐ bù fàngqì, jiù réngrán yǒu xīwàng.",
+        "en": "As long as you don't give up, there is still hope."
       }
     ],
     "lesson": "Slides_20260902"
@@ -4461,5 +4496,252 @@
       }
     ],
     "lesson": "Slides_20260902"
+  },
+  {
+    "hanzi": "加油站",
+    "pinyin": "jiāyóuzhàn",
+    "meaning": "n. gas station",
+    "usage": [
+      {
+        "zh": "去机场的路上有加油站吗？",
+        "pinyin": "Qù jīchǎng de lù shàng yǒu jiāyóuzhàn ma?",
+        "en": "Is there a gas station on the way to the airport?"
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "航班",
+    "pinyin": "hángbān",
+    "meaning": "n. scheduled flight",
+    "usage": [
+      {
+        "zh": "你去北京的航班是几点的？时间来得及吗？",
+        "pinyin": "Nǐ qù Běijīng de hángbān shì jǐ diǎn de? Shíjiān láidejí ma?",
+        "en": "What time is your flight to Beijing? Will you have enough time?"
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "高速公路",
+    "pinyin": "gāosù gōnglù",
+    "meaning": "n. expressway, highway",
+    "usage": [
+      {
+        "zh": "一会儿加完油，往西走五百米就能上高速公路，大约半个小时就到了。",
+        "pinyin": "Yíhuìr jiā wán yóu, xiàng xǐ zǒu wǔbǎi mǐ jiù néng shàng gāosù gōnglù, dàyuē bàn gè xiǎoshí jiù dào le.",
+        "en": "After filling up, head west five hundred metres and you'll reach the expressway — about half an hour and you're there."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "登机牌",
+    "pinyin": "dēngjīpái",
+    "meaning": "n. boarding pass",
+    "usage": [
+      {
+        "zh": "一会儿我自己进去拿登机牌，你就不用送我了。",
+        "pinyin": "Yíhuìr wǒ zìjǐ jìnqù ná dēngjīpái, nǐ jiù bú yòng sòng wǒ le.",
+        "en": "I'll go in and get my boarding pass myself — you don't need to drop me off."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "结束",
+    "pinyin": "jiéshù",
+    "meaning": "v. to end, to finish",
+    "usage": [
+      {
+        "zh": "真没想到，四年的大学生活竟然这么快就结束了。",
+        "pinyin": "Zhēn méi xiǎngdào, sì nián de dàxué shēnghuó jìngrán zhème kuài jiù jiéshù le.",
+        "en": "I never imagined four years of university life would end so quickly."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "加速",
+    "pinyin": "jiāsù",
+    "meaning": "v. to accelerate, to speed up",
+    "usage": [
+      {
+        "zh": "刚才太危险了，那辆车突然加速，可能是新手，刚学会开车。",
+        "pinyin": "Gāngcái tài wēixiǎn le, nà liàng chē tūrán jiāsù, kěnéng shì xīnshǒu, gāng xuéhuì kāichē.",
+        "en": "That was so dangerous just now — the car suddenly sped up; maybe it's a new driver who just learned."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "后悔药",
+    "pinyin": "hòuhuǐyào",
+    "meaning": "n. \"regret pill\" (figurative — something you can never get)",
+    "usage": [
+      {
+        "zh": "世界上有一种药是买不到的，那就是“后悔药”。",
+        "pinyin": "Shìjiè shàng yǒu yì zhǒng yào shì mǎi bú dào de, nà jiù shì \"hòuhuǐyào\".",
+        "en": "There's one medicine in the world you can never buy — the \"regret pill.\""
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "放心",
+    "pinyin": "fàngxīn",
+    "meaning": "v. to rest assured, to set one's mind at ease",
+    "usage": [
+      {
+        "zh": "好，那我就放心了，别开着开着没油了。",
+        "pinyin": "Hǎo, nà wǒ jiù fàngxīn le, bié kāizhe kāizhe méi yóu le.",
+        "en": "Good, then I can rest easy — just don't run out of petrol mid-drive."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "短信",
+    "pinyin": "duǎnxìn",
+    "meaning": "n. text message, SMS",
+    "usage": [
+      {
+        "zh": "等我到了首都机场再给你发短信。",
+        "pinyin": "Děng wǒ dào le shǒudū jīchǎng zài gěi nǐ fā duǎnxìn.",
+        "en": "I'll text you once I arrive at the capital airport."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "旅行",
+    "pinyin": "lǚxíng",
+    "meaning": "n./v. travel, trip",
+    "usage": [
+      {
+        "zh": "欢迎大家来到美丽的海南，旅行中有任何事您都可以找我商量。",
+        "pinyin": "Huānyíng dàjiā lái dào měilì de Hǎinán, lǚxíng zhōng yǒu rènhé shì nín dōu kěyǐ zhǎo wǒ shāngliang.",
+        "en": "Welcome to beautiful Hainan — if you need anything during your trip, feel free to talk to me."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "来得及",
+    "pinyin": "láidejí",
+    "meaning": "v. to be in time; to have enough time",
+    "usage": [
+      {
+        "zh": "你去北京的航班是几点的？时间来得及吗？",
+        "pinyin": "Nǐ qù Běijīng de hángbān shì jǐ diǎn de? Shíjiān láidejí ma?",
+        "en": "What time is your flight to Beijing? Will you have enough time?"
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "抱歉",
+    "pinyin": "bàoqiàn",
+    "meaning": "v./adj. to apologise; sorry",
+    "usage": [
+      {
+        "zh": "乘客，您好！我们很抱歉地通知您，因为天气的原因，您乘坐的CA1864航班推迟起飞。",
+        "pinyin": "Chéngkè, nín hǎo! Wǒmen hěn bàoqiàn de tōngzhī nín, yīnwèi tiānqì de yuányīn, nín chéngzuò de CA1864 hángbān tuīchí qǐfēi.",
+        "en": "Hello passenger! We regret to inform you that due to weather conditions, your CA1864 flight has been delayed."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "原因",
+    "pinyin": "yuányīn",
+    "meaning": "n. reason, cause",
+    "usage": [
+      {
+        "zh": "我们很抱歉地通知您，因为天气的原因，您乘坐的航班推迟起飞。",
+        "pinyin": "Wǒmen hěn bàoqiàn de tōngzhī nín, yīnwèi tiānqì de yuányīn, nín chéngzuò de hángbān tuīchí qǐfēi.",
+        "en": "We regret to inform you that due to weather conditions, your flight has been delayed."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "开着开着",
+    "pinyin": "kāizhe kāizhe",
+    "meaning": "expr. V+着+V+着 — while driving along",
+    "usage": [
+      {
+        "zh": "好，那我就放心了，别开着开着没油了。",
+        "pinyin": "Hǎo, nà wǒ jiù fàngxīn le, bié kāizhe kāizhe méi yóu le.",
+        "en": "Good, then I can rest easy — just don't run out of petrol while driving."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "讲着讲着",
+    "pinyin": "jiǎngzhe jiǎngzhe",
+    "meaning": "expr. V+着+V+着 — while talking along",
+    "usage": [
+      {
+        "zh": "她讲着讲着自己就先笑了，但是大家都不明白她为什么笑。",
+        "pinyin": "Tā jiǎngzhe jiǎngzhe zìjǐ jiù xiān xiào le, dànshì dàjiā dōu bù míngbái tā wèishéme xiào.",
+        "en": "While she was talking she started laughing first, but nobody understood why."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "躺着躺着",
+    "pinyin": "tǎngzhe tǎngzhe",
+    "meaning": "expr. V+着+V+着 — while lying down",
+    "usage": [
+      {
+        "zh": "晚上，躺在草地上看星星的感觉真好，有时候躺着躺着就安静地睡着了。",
+        "pinyin": "Wǎnshang, tǎng zài cǎodì shàng kàn xīngxing de gǎnjué zhēn hǎo, yǒushíhou tǎngzhe tǎngzhe jiù ānjìng de shuìzháo le.",
+        "en": "Lying on the grass watching the stars at night feels wonderful — sometimes you quietly fall asleep while lying there."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "看着看着",
+    "pinyin": "kànzhe kànzhe",
+    "meaning": "expr. V+着+V+着 — while watching/reading",
+    "usage": [
+      {
+        "zh": "这本小说很无聊，看着看着就睡着了。",
+        "pinyin": "Zhè běn xiǎoshuō hěn wúliáo, kànzhe kànzhe jiù shuìzháo le.",
+        "en": "This novel is so boring — I fell asleep while reading it."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "想着想着",
+    "pinyin": "xiǎngzhe xiǎngzhe",
+    "meaning": "expr. V+着+V+着 — while thinking",
+    "usage": [
+      {
+        "zh": "小时候的回忆总是很美好，有时候总是想着想着就笑了。",
+        "pinyin": "Xiǎoshíhou de huíyì zǒng shì hěn měihǎo, yǒushíhou zǒng shì xiǎngzhe xiǎngzhe jiù xiào le.",
+        "en": "Childhood memories are always so lovely — sometimes you just start smiling while thinking about them."
+      }
+    ],
+    "lesson": "Slides_20260916"
+  },
+  {
+    "hanzi": "吃着吃着",
+    "pinyin": "chīzhe chīzhe",
+    "meaning": "expr. V+着+V+着 — while eating",
+    "usage": [
+      {
+        "zh": "那天的羊肉饺子太好吃了，吃着吃着就全吃完了。",
+        "pinyin": "Nà tiān de yángròu jiǎozi tài hǎochī le, chīzhe chīzhe jiù quán chī wán le.",
+        "en": "The lamb dumplings that day were so delicious — before I knew it I'd eaten them all."
+      }
+    ],
+    "lesson": "Slides_20260916"
   }
 ]
