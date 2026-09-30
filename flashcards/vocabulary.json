@@ -4921,5 +4921,300 @@
     "pinyin": "yàrèdài",
     "meaning": "n. subtropics; subtropical zone",
     "lesson": "Slides_20260923"
+  },
+  {
+    "hanzi": "性格",
+    "pinyin": "xìnggé",
+    "meaning": "n. character, personality",
+    "usage": [
+      {
+        "zh": "他们两个是在国外旅游的时候认识的，他们俩的性格差不多，所以很快就成了好朋友。",
+        "pinyin": "Tāmen liǎng gè shì zài guówài lǚyóu de shíhou rènshi de, tāmen liǎ de xìnggé chàbuduō, suǒyǐ hěn kuài jiù chéng le hǎo péngyou.",
+        "en": "They met while travelling abroad; their personalities were similar, so they quickly became good friends."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "理想",
+    "pinyin": "lǐxiǎng",
+    "meaning": "n. ideal; aspiration",
+    "usage": [
+      {
+        "zh": "我的性格很像我父亲，我的理想就是做一个像父亲那样的医生。",
+        "pinyin": "Wǒ de xìnggé hěn xiàng wǒ fùqīn, wǒ de lǐxiǎng jiù shì zuò yí gè xiàng fùqīn nàyàng de yīshēng.",
+        "en": "My personality is a lot like my father's; my ideal is to become a doctor like him."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "租",
+    "pinyin": "zū",
+    "meaning": "v. to rent",
+    "usage": [
+      {
+        "zh": "我想租一个窗户向南、阳光好的房间，附近最好有超市和医院。",
+        "pinyin": "Wǒ xiǎng zū yí gè chuānghu xiàng nán, yángguāng hǎo de fángjiān, fùjìn zuìhǎo yǒu chāoshì hé yīyuàn.",
+        "en": "I want to rent a south-facing room with good sunlight; ideally there are a supermarket and a hospital nearby."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "附近",
+    "pinyin": "fùjìn",
+    "meaning": "n. vicinity; nearby area",
+    "usage": [
+      {
+        "zh": "我想租一个窗户向南、阳光好的房间，附近最好有超市和医院。",
+        "pinyin": "Wǒ xiǎng zū yí gè chuānghu xiàng nán, yángguāng hǎo de fángjiān, fùjìn zuìhǎo yǒu chāoshì hé yīyuàn.",
+        "en": "I want to rent a sunny south-facing room; it's best if there's a supermarket and hospital nearby."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "信用卡",
+    "pinyin": "xìnyòngkǎ",
+    "meaning": "n. credit card",
+    "usage": [
+      {
+        "zh": "如果您想办信用卡的话，需要先填一下这张表格。",
+        "pinyin": "Rúguǒ nín xiǎng bàn xìnyòngkǎ dehuà, xūyào xiān tián yīxià zhè zhāng biǎogé.",
+        "en": "If you'd like to apply for a credit card, you'll need to fill out this form first."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "填",
+    "pinyin": "tián",
+    "meaning": "v. to fill in (a form)",
+    "usage": [
+      {
+        "zh": "抱歉，这张表格您填得不对，请稍等一下，我再拿一张新的给您，请您重新写一下。",
+        "pinyin": "Bàoqiàn, zhè zhāng biǎogé nín tián de bú duì, qǐng shāo děng yīxià, wǒ zài ná yī zhāng xīn de gěi nín, qǐng nín chóngxīn xiě yīxià.",
+        "en": "Sorry, you filled out this form incorrectly — please wait a moment while I get you a new one to fill in again."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "管理者",
+    "pinyin": "guǎnlǐzhě",
+    "meaning": "n. manager, administrator",
+    "usage": [
+      {
+        "zh": "一个合格的公司管理者，一定要允许其他人有反对意见。",
+        "pinyin": "Yí gè hégé de gōngsī guǎnlǐzhě, yídìng yào yǔnxǔ qítā rén yǒu fǎnduì yìjiàn.",
+        "en": "A qualified company manager must allow others to have opposing views."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "反对意见",
+    "pinyin": "fǎnduì yìjiàn",
+    "meaning": "n. opposing opinion, objection",
+    "usage": [
+      {
+        "zh": "一个合格的公司管理者，一定要允许其他人有反对意见。",
+        "pinyin": "Yí gè hégé de gōngsī guǎnlǐzhě, yídìng yào yǔnxǔ qítā rén yǒu fǎnduì yìjiàn.",
+        "en": "A qualified company manager must allow others to voice objections."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "稍等",
+    "pinyin": "shāo děng",
+    "meaning": "v. to wait a moment",
+    "usage": [
+      {
+        "zh": "抱歉，这张表格您填得不对，请稍等一下，我再拿一张新的给您。",
+        "pinyin": "Bàoqiàn, zhè zhāng biǎogé nín tián de bú duì, qǐng shāo děng yīxià, wǒ zài ná yī zhāng xīn de gěi nín.",
+        "en": "Sorry, this form isn't filled out correctly — please wait a moment while I get you a new one."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "高级班",
+    "pinyin": "gāojí bān",
+    "meaning": "n. advanced class",
+    "usage": [
+      {
+        "zh": "只要他这次考试的成绩都合格，就可以进入高级班学习。",
+        "pinyin": "Zhǐyào tā zhè cì kǎoshì de chéngjì dōu hégé, jiù kěyǐ jìnrù gāojí bān xuéxí.",
+        "en": "As long as he passes all his exams this time, he can move up to the advanced class."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "除了",
+    "pinyin": "chúle",
+    "meaning": "prep. besides, apart from",
+    "usage": [
+      {
+        "zh": "这家酒店除了房间有点儿小以外，其他方面都还不错。",
+        "pinyin": "Zhè jiā jiǔdiàn chúle fángjiān yǒudiǎnr xiǎo yǐwài, qítā fāngmiàn dōu hái búcuò.",
+        "en": "Apart from the rooms being a bit small, this hotel is pretty good in other respects."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "以外",
+    "pinyin": "yǐwài",
+    "meaning": "part. other than; beyond (after 除了)",
+    "usage": [
+      {
+        "zh": "这家酒店除了房间有点儿小以外，其他方面都还不错。",
+        "pinyin": "Zhè jiā jiǔdiàn chúle fángjiān yǒudiǎnr xiǎo yǐwài, qítā fāngmiàn dōu hái búcuò.",
+        "en": "Other than the rooms being a bit small, this hotel is fine in every other way."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "干杯",
+    "pinyin": "gān bēi",
+    "meaning": "v. to drink a toast; cheers",
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "打扮",
+    "pinyin": "dǎbàn",
+    "meaning": "v. to dress up; to deck out",
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "笑话",
+    "pinyin": "xiàohuà",
+    "meaning": "n. joke",
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "存",
+    "pinyin": "cún",
+    "meaning": "v. to store; to keep; to deposit",
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "钥匙",
+    "pinyin": "yàoshi",
+    "meaning": "n. key",
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "究竟",
+    "pinyin": "jiūjìng",
+    "meaning": "adv. exactly; on earth (emphasis in questions)",
+    "usage": [
+      {
+        "zh": "究竟哪个季节去丽江旅游比较好呢？",
+        "pinyin": "Jiūjìng nǎge jìjié qù Lìjiāng lǚyóu bǐjiào hǎo ne?",
+        "en": "Which season is actually best for travelling to Lijiang?"
+      },
+      {
+        "zh": "无论做什么事情，只有试了才知道究竟能不能成功。",
+        "pinyin": "Wúlùn zuò shénme shìqing, zhǐyǒu shì le cái zhīdào jiūjìng néng bù néng chénggōng.",
+        "en": "Whatever you do, you only find out whether you can succeed by trying."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "猜",
+    "pinyin": "cāi",
+    "meaning": "v. to guess",
+    "usage": [
+      {
+        "zh": "这个比赛太好看了，你猜谁能先进球？",
+        "pinyin": "Zhège bǐsài tài hǎokàn le, nǐ cāi shéi néng xiān jìn qiú?",
+        "en": "This match is so exciting — guess who will score first?"
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "希望",
+    "pinyin": "xīwàng",
+    "meaning": "n./v. hope; to hope",
+    "usage": [
+      {
+        "zh": "大部分事情都不会很容易就成功，只有坚持到底，才会有希望。",
+        "pinyin": "Dà bùfen shìqing dōu bú huì hěn róngyì jiù chénggōng, zhǐyǒu jiānchí dào dǐ, cái huì yǒu xīwàng.",
+        "en": "Most things don't succeed easily — only by sticking it out to the end is there hope."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "繁体字",
+    "pinyin": "fántǐzì",
+    "meaning": "n. traditional Chinese characters",
+    "usage": [
+      {
+        "zh": "这本书用的是繁体字，我看不太懂。",
+        "pinyin": "Zhè běn shū yòng de shì fántǐzì, wǒ kàn bú tài dǒng.",
+        "en": "This book uses traditional characters — I can't really read them."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "看不懂",
+    "pinyin": "kàn bù dǒng",
+    "meaning": "v. can't read / can't make out (by looking); don't understand (written text)",
+    "usage": [
+      {
+        "zh": "这些繁体字我看不懂。",
+        "pinyin": "Zhèxiē fántǐzì wǒ kàn bù dǒng.",
+        "en": "I can't read these traditional characters."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "明显",
+    "pinyin": "míngxiǎn",
+    "meaning": "adj. obvious; clear; noticeable",
+    "usage": [
+      {
+        "zh": "他的进步非常明显。",
+        "pinyin": "Tā de jìnbù fēicháng míngxiǎn.",
+        "en": "His progress is very obvious."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "肤色",
+    "pinyin": "fūsè",
+    "meaning": "n. skin color; complexion",
+    "usage": [
+      {
+        "zh": "不同地区的人肤色可能不一样。",
+        "pinyin": "Bùtóng dìqū de rén fūsè kěnéng bù yīyàng.",
+        "en": "People from different regions may have different complexions."
+      }
+    ],
+    "lesson": "Slides_20260930"
+  },
+  {
+    "hanzi": "指纹锁",
+    "pinyin": "zhǐwénsuǒ",
+    "meaning": "n. fingerprint lock",
+    "usage": [
+      {
+        "zh": "这个门用的是指纹锁，不用带钥匙。",
+        "pinyin": "Zhège mén yòng de shì zhǐwénsuǒ, bú yòng dài yàoshi.",
+        "en": "This door has a fingerprint lock, so you don't need to carry a key."
+      }
+    ],
+    "lesson": "Slides_20260930"
   }
 ]
