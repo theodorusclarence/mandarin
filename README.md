@@ -2,8 +2,8 @@
 
 HSK 4 vocabulary flashcards, built up week by week from class slides.
 
-**[Open the flashcards →](https://theodorusclarence.github.io/mandarin/flashcards/)**
-**[Open the SRS review →](https://theodorusclarence.github.io/mandarin/srs/)**
+**[Open the flashcards →](https://mandarin.thcl.dev/)**
+**[Open the SRS review →](https://mandarin.thcl.dev/srs/)**
 
 ## What's here
 
